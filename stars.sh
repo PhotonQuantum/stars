@@ -14,6 +14,7 @@ PACMAN=0
 DPKG=0
 YUM=0
 GOLANG=0
+GENTOO=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -46,6 +47,12 @@ while [[ $# -gt 0 ]]; do
       echo "Argument $1: yum module enabled"
       TARGET=1
       YUM=1
+      shift
+      ;;
+    gentoo)
+      echo "Argument $1: gentoo module enabled"
+      TARGET=1
+      GENTOO=1
       shift
       ;;
     golang|go)
@@ -111,6 +118,12 @@ fi
 if [[ $YUM -eq 1 ]]; then
   check "yum"
   list="$(yum info installed 2> /dev/null | grep URL | grep 'https://github.com/' | sed 's/  */|/g' | cut -d '|' -f 3 | extract) $list"
+fi
+
+## Gentoo
+if [[ $GENTOO -eq 1 ]]; then
+  check "equery"
+  list="$(equery list '*' | xargs equery meta | grep Homepage | grep 'https://github.com/' | sed 's/  */|/g' | cut -d '|' -f 2 | extract) $list"
 fi
 
 ## Golang
