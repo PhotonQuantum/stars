@@ -40,8 +40,11 @@ function check() {
 }
 
 # generate list
-
 list=""
+check "gh"
+if [[ $? -ne 0 ]]; then
+  exit 1
+fi
 
 ## Arch Linux
 check "pacman xargs grep sed cut sort uniq head"
@@ -51,11 +54,12 @@ fi
 
 # star!
 for repo in $list; do
-  com="gh"
+  com="gh api --silent -X PUT"
   if [[ $DRYRUN -eq 1 ]]; then
-    com="echo"
+    echo $repo | sed "s_^_/user/starred/_" | xargs -I {} echo "Will run: gh api --silent -X PUT" {}
+  else
+    echo $repo | sed "s_^_/user/starred/_" | xargs gh api --silent -X PUT > /dev/null
   fi
-  echo $repo | sed "s_^_/user/starred/_" | xargs $com > /dev/null
   if [[ $? -ne 0 ]]; then
     echo -e "${RED}! Error when star github.com/$repo${NC}"
   elif [[ $QUIET -ne 1 ]]; then
