@@ -7,6 +7,7 @@ NC='\033[0m'
 # parse arguments
 DRYRUN=0
 QUIET=0
+BURST=0
 
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -17,6 +18,11 @@ while [[ $# -gt 0 ]]; do
       ;;
     -q|--quiet)
       QUIET=1
+      shift
+      ;;
+    -b|--burst)
+      echo "You have been warned!"
+      BURST=1
       shift
       ;;
   esac
@@ -54,5 +60,8 @@ for repo in $list; do
     echo -e "${RED}! Error when star github.com/$repo${NC}"
   elif [[ $QUIET -ne 1 ]]; then
     echo -e "Starred ${repo}"
+  fi
+  if [[ $BURST -ne 1 ]]; then
+    sleep 1 # sleep due to rate limit
   fi
 done
