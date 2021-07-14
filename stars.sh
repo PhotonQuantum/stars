@@ -13,6 +13,7 @@ TARGET=0
 PACMAN=0
 DPKG=0
 YUM=0
+GOLANG=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -47,6 +48,12 @@ while [[ $# -gt 0 ]]; do
       YUM=1
       shift
       ;;
+    golang|go)
+      echo "Argument $1: golang module enabled"
+      TARGET=1
+      GOLANG=1
+      shift
+      ;;
     *)
       echo "Unknown argument: $1"
       exit 1
@@ -59,7 +66,17 @@ function check() {
   for com in $1; do
     which $com &> /dev/null
     if [ $? -ne 0 ]; then
-      echo -e "${RED}$com not found${NC}"
+      echo -e "${RED}$com not found in PATH${NC}"
+      exit 1
+    fi
+  done
+  return 0
+}
+
+function exist() {
+  for file in $1; do
+    if [[ ! -f "$file" ]]; then
+      echo -e "${RED}$1 not found in current directory${NC}"
       exit 1
     fi
   done
@@ -94,6 +111,12 @@ fi
 if [[ $YUM -eq 1 ]]; then
   check "yum"
   list="$(yum info installed 2> /dev/null | grep URL | grep 'https://github.com/' | sed 's/  */|/g' | cut -d '|' -f 3 | extract) $list"
+fi
+
+## Golang
+if [[ $GOLANG -eq 1 ]]; then
+  exist "go.sum"
+  list="$(cat go.sum | grep 'github.com' | cut -d ' ' -f 1 | sed 's_^_https://_' | extract) $list"
 fi
 
 ## No target
