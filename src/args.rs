@@ -6,8 +6,14 @@ use clap::Parser;
 pub struct Args {
     /// Do not actually star upstream repositories.
     #[clap(short, long)]
-    dry_run: bool,
+    pub dry_run: bool,
     /// Suppress all output.
     #[clap(short, long)]
-    quiet: bool
+    pub quiet: bool,
+    /// Disable specific sources.
+    #[clap(long)]
+    pub disable_source: Vec<String>,
+    /// Disable specific targets.
+    #[clap(long)]
+    pub disable_target: Vec<String>,
 }

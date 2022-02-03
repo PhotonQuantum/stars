@@ -4,8 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-clap = { version = "3.0", features=["derive"] }
+clap = { version = "3.0", features = ["derive"] }
 console = "0.15"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 which = "4.2"
+ureq = "2.4"
+indicatif = "0.16"
+url = { version = "2.2", features = ["serde"] }
+app_dirs2 = "2.3"
+tap = "1.0"
