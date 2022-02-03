@@ -23,10 +23,10 @@ jobs:
           default: true
       - uses: Swatinem/rust-cache@v1
       - uses: actions-rs/cargo@v1
-        name: Check Code Format (auto fix) 🔧
+        name: Check Code Format 🔧
         with:
-          command: fmt --check
-          args: --all-targets
+          command: fmt
+          args: -- --check
       - uses: actions-rs/cargo@v1
         name: Run Clippy Lints 🔨
         with:
