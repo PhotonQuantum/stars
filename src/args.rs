@@ -1,19 +1,19 @@
-/// Argument parsing.
-use clap::Parser;
+//! Argument parsing.
+use argh::FromArgs;
 
-#[derive(Debug, Parser)]
-#[clap(author, version, about)]
+#[derive(Debug, FromArgs)]
+/// Star your upstream.
 pub struct Args {
-    /// Do not actually star upstream repositories.
-    #[clap(short, long)]
+    /// do not actually star upstream repositories
+    #[argh(switch, short = 'd')]
     pub dry_run: bool,
-    /// Suppress all output.
-    #[clap(short, long)]
+    /// suppress all output
+    #[argh(switch, short = 'q')]
     pub quiet: bool,
-    /// Disable specific sources.
-    #[clap(long)]
+    /// disable specific sources
+    #[argh(option)]
     pub disable_source: Vec<String>,
-    /// Disable specific targets.
-    #[clap(long)]
+    /// disable specific targets
+    #[argh(option)]
     pub disable_target: Vec<String>,
 }

@@ -1,7 +1,6 @@
 #![allow(clippy::module_name_repetitions)]
 extern crate core;
 
-use clap::Parser;
 use indicatif::{ProgressBar, ProgressStyle};
 
 use crate::args::Args;
@@ -21,7 +20,7 @@ mod utils;
 
 fn main() {
     let logger = Logger::default();
-    let args = Args::parse();
+    let args: Args = argh::from_env();
 
     let mut sources = SourceRegistry::new(&logger);
     sources.register(Homebrew);
