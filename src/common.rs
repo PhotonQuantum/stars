@@ -2,6 +2,7 @@
 
 use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter};
+#[cfg(feature = "native_tls")]
 use std::sync::Arc;
 
 use once_cell::sync::Lazy;

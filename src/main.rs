@@ -19,8 +19,8 @@ mod persist;
 mod registry;
 
 fn main() {
-    let logger = Logger::default();
     let args: Args = argh::from_env();
+    let logger = Logger::new(args.quiet);
 
     let mut persist = Persist::new();
 
@@ -33,7 +33,11 @@ fn main() {
         targets.deregister(disabled.as_str());
     }
 
-    let pb = ProgressBar::new_spinner();
+    let pb = if args.quiet {
+        ProgressBar::hidden()
+    } else {
+        ProgressBar::new_spinner()
+    };
     pb.set_style(ProgressStyle::default_spinner().template("{spinner:.green} {msg}"));
     pb.set_message("Aggregating packages...");
     pb.enable_steady_tick(100);
@@ -41,7 +45,11 @@ fn main() {
     let packages = sources.aggregate(&targets);
     logger.set_target(LogTarget::Plain);
 
-    let pb = ProgressBar::new(packages.len() as u64);
+    let pb = if args.quiet {
+        ProgressBar::hidden()
+    } else {
+        ProgressBar::new(packages.len() as u64)
+    };
     let max_name_len = packages
         .iter()
         .map(|package| package.name.len())

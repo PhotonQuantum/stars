@@ -15,12 +15,18 @@ impl Default for LogTarget {
     }
 }
 
-#[derive(Default)]
 pub struct Logger {
     target: RefCell<LogTarget>,
+    quiet: bool
 }
 
 impl Logger {
+    pub fn new(quiet: bool) -> Self {
+        Self {
+            target: RefCell::new(Default::default()),
+            quiet
+        }
+    }
     pub fn set_target(&self, target: LogTarget) {
         *self.target.borrow_mut() = target;
     }
@@ -37,9 +43,11 @@ impl Logger {
         self.println(format!("{} {}", style("ERROR").green(), msg));
     }
     pub fn println(&self, msg: impl Display) {
-        match &*self.target.borrow() {
-            LogTarget::Plain => println!("{}", msg),
-            LogTarget::Progress(pb) => pb.println(msg.to_string()),
+        if !self.quiet {
+            match &*self.target.borrow() {
+                LogTarget::Plain => println!("{}", msg),
+                LogTarget::Progress(pb) => pb.println(msg.to_string()),
+            }
         }
     }
     /// Pause background tick of progress bar.
