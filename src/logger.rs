@@ -37,10 +37,10 @@ impl Logger {
         self.println(format!("{}  {}", style("INFO").green(), msg));
     }
     pub fn warn(&self, msg: impl Display) {
-        self.println(format!("{}  {}", style("WARN").green(), msg));
+        self.println(format!("{}  {}", style("WARN").yellow(), msg));
     }
     pub fn error(&self, msg: impl Display) {
-        self.println(format!("{} {}", style("ERROR").green(), msg));
+        self.println(format!("{} {}", style("ERROR").red(), msg));
     }
     pub fn println(&self, msg: impl Display) {
         if !self.quiet {
