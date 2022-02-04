@@ -7,7 +7,7 @@ use ureq::Agent;
 use url::Url;
 
 use crate::common::{BoxedError, Target};
-use crate::Logger;
+use crate::{Logger, Persist};
 
 pub struct Github {
     client: Agent,
@@ -28,14 +28,27 @@ impl Target for Github {
         "github"
     }
 
-    fn init(&mut self, logger: &Logger) -> bool {
-        logger.pause_tick();
-        let token = dialoguer::Password::new()
-            .with_prompt("Please input your github token")
-            .interact()
-            .expect("write to term");
+    fn init(&mut self, logger: &Logger, persist: &mut Persist) -> bool {
+        let token =
+            if let Some(token) = persist.get_state(|state| state.get("github_token").cloned()) {
+                token.as_str().unwrap().to_string()
+            } else {
+                logger.pause_tick();
+
+                let token = dialoguer::Password::new()
+                    .with_prompt("Please input your github token")
+                    .interact()
+                    .expect("write to term");
+
+                persist.with_state(|state| {
+                    state.insert(String::from("github_token"), token.clone().into());
+                });
+
+                logger.resume_tick();
+                token
+            };
+
         self.token = Some(token);
-        logger.resume_tick();
         true
     }
 
@@ -45,7 +58,12 @@ impl Target for Github {
         })
     }
 
-    fn star(&self, _logger: &Logger, _package: &Url) -> Result<(), BoxedError> {
+    fn star(
+        &self,
+        _logger: &Logger,
+        _persist: &mut Persist,
+        _package: &Url,
+    ) -> Result<(), BoxedError> {
         // TODO
         sleep(Duration::from_millis(100));
         Ok(())

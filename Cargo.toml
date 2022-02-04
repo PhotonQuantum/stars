@@ -9,6 +9,7 @@ lto = true
 [dependencies]
 argh = "0.1"
 console = "0.15"
+directories = "4.0"
 dialoguer = "0.9"
 indicatif = "0.16"
 serde = { version = "1.0", features = ["derive"] }

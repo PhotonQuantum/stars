@@ -5,7 +5,7 @@ use tap::TapFallible;
 use url::Url;
 
 use crate::common::{Package, Source, SourceType, Target};
-use crate::Logger;
+use crate::{Logger, Persist};
 
 enum TargetState {
     Uninitialized,
@@ -17,13 +17,15 @@ enum TargetState {
 pub struct TargetRegistry<'a> {
     targets: HashMap<&'static str, (Box<dyn Target>, TargetState)>,
     logger: &'a Logger,
+    persist: &'a mut Persist,
 }
 
 impl<'a> TargetRegistry<'a> {
-    pub fn new(logger: &'a Logger) -> Self {
+    pub fn new(logger: &'a Logger, persist: &'a mut Persist) -> Self {
         Self {
             targets: Default::default(),
             logger,
+            persist,
         }
     }
     pub fn register(&mut self, target: impl Target) {
@@ -48,14 +50,14 @@ impl<'a> TargetRegistry<'a> {
             loop {
                 match state {
                     TargetState::Uninitialized => {
-                        *state = if target.init(self.logger) {
+                        *state = if target.init(self.logger, self.persist) {
                             TargetState::Initialized
                         } else {
                             TargetState::Failed
                         };
                     }
                     TargetState::Initialized => {
-                        if let Err(e) = target.star(self.logger, &package.url) {
+                        if let Err(e) = target.star(self.logger, self.persist, &package.url) {
                             self.logger
                                 .error(format!("error while starring {}: {}", package, e));
                         }

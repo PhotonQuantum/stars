@@ -6,7 +6,7 @@ use std::fmt::{Debug, Display, Formatter};
 use url::Url;
 
 use crate::registry::TargetRegistry;
-use crate::Logger;
+use crate::{Logger, Persist};
 
 /// Convenient alias for boxed error.
 pub type BoxedError = Box<dyn std::error::Error + Send + Sync>;
@@ -45,13 +45,14 @@ pub trait Target: 'static {
     ///
     /// This function will be called first time this target is used to star a package.
     /// Return `true` to indicate a success.
-    fn init(&mut self, logger: &Logger) -> bool;
+    fn init(&mut self, logger: &Logger, persist: &mut Persist) -> bool;
     /// Check whether the url can be handled by this target.
     ///
     /// This function should not touch the system or issue any network requests.
     fn can_handle(&self, url: &Url) -> bool;
     /// Star the package.
-    fn star(&self, logger: &Logger, package: &Url) -> Result<(), BoxedError>;
+    fn star(&self, logger: &Logger, persist: &mut Persist, package: &Url)
+        -> Result<(), BoxedError>;
 }
 
 /// A package with star handler packed in.

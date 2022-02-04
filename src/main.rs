@@ -7,6 +7,7 @@ use crate::args::Args;
 use crate::github::Github;
 use crate::homebrew::Homebrew;
 use crate::logger::{LogTarget, Logger};
+use crate::persist::Persist;
 use crate::registry::{SourceRegistry, TargetRegistry};
 
 mod args;
@@ -14,11 +15,14 @@ mod common;
 mod github;
 mod homebrew;
 mod logger;
+mod persist;
 mod registry;
 
 fn main() {
     let logger = Logger::default();
     let args: Args = argh::from_env();
+
+    let mut persist = Persist::new();
 
     let mut sources = SourceRegistry::new(&logger);
     sources.register(Homebrew);
@@ -26,7 +30,7 @@ fn main() {
         sources.deregister(disabled.as_str());
     }
 
-    let mut targets = TargetRegistry::new(&logger);
+    let mut targets = TargetRegistry::new(&logger, &mut persist);
     targets.register(Github::default());
     for disabled in args.disable_target {
         targets.deregister(disabled.as_str());
@@ -50,10 +54,10 @@ fn main() {
         ProgressStyle::default_bar()
             .template(
                 format!(
-                "{{spinner:.green}} [{{wide_bar:.cyan/blue}}] {{pos}}/{{len}} ({{eta}}) {{msg:{}}}",
-                max_name_len
-            )
-                .as_str(),
+                    "{{spinner:.green}} [{{wide_bar:.cyan/blue}}] {{pos}}/{{len}} ({{eta}}) {{msg:{}}}",
+                    max_name_len
+                )
+                    .as_str(),
             )
             .progress_chars("#>-"),
     );
