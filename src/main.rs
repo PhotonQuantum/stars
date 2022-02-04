@@ -8,7 +8,6 @@ use crate::github::Github;
 use crate::homebrew::Homebrew;
 use crate::logger::{LogTarget, Logger};
 use crate::registry::{SourceRegistry, TargetRegistry};
-use crate::utils::Spinner;
 
 mod args;
 mod common;
@@ -16,7 +15,6 @@ mod github;
 mod homebrew;
 mod logger;
 mod registry;
-mod utils;
 
 fn main() {
     let logger = Logger::default();
@@ -29,33 +27,32 @@ fn main() {
     }
 
     let mut targets = TargetRegistry::new(&logger);
-    targets.register(Github);
+    targets.register(Github::default());
     for disabled in args.disable_target {
         targets.deregister(disabled.as_str());
     }
 
     let pb = ProgressBar::new_spinner();
+    pb.set_style(ProgressStyle::default_spinner().template("{spinner:.green} {msg}"));
     pb.set_message("Aggregating packages...");
-    logger.set_target(LogTarget::Progress(pb.clone()));
-    let packages = {
-        let _spinner = Spinner::new(pb);
-        sources.aggregate(&targets)
-    };
+    pb.enable_steady_tick(100);
+    logger.set_target(LogTarget::Progress(pb));
+    let packages = sources.aggregate(&targets);
     logger.set_target(LogTarget::Plain);
 
     let pb = ProgressBar::new(packages.len() as u64);
     pb.set_style(
         ProgressStyle::default_bar()
-            .template("[{wide_bar:.cyan/blue}] {pos}/{len} ({eta})")
+            .template("{spinner:.green} [{wide_bar:.cyan/blue}] {pos}/{len} ({eta})")
             .progress_chars("#>-"),
     );
+    pb.enable_steady_tick(100);
     logger.set_target(LogTarget::Progress(pb.clone()));
     for package in &packages {
         logger.info(format!("Starring {}", package));
-        if let Err(e) = targets.star(package) {
-            logger.error(format!("error when starring {} - {}", package, e));
-        }
+        targets.star(package);
         pb.inc(1);
     }
+    drop(pb);
     logger.set_target(LogTarget::Plain);
 }

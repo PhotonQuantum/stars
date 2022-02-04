@@ -1,5 +1,6 @@
+//! Definitions of common structs, enums and traits.
+
 use std::collections::HashMap;
-/// Definitions of common structs, enums and traits.
 use std::fmt::{Debug, Display, Formatter};
 
 use url::Url;
@@ -10,7 +11,7 @@ use crate::Logger;
 /// Convenient alias for boxed error.
 pub type BoxedError = Box<dyn std::error::Error + Send + Sync>;
 
-/// A source of packages.
+/// Source of packages.
 pub trait Source: 'static + Debug {
     /// Identifier of this source.
     fn name(&self) -> &'static str;
@@ -36,10 +37,17 @@ pub enum SourceType {
     Local(&'static [&'static str]),
 }
 
+/// Target platform to star a package.
 pub trait Target: 'static {
     /// Identifier of this target.
     fn name(&self) -> &'static str;
+    /// Initialize the target.
+    ///
+    /// This function will be called first time this target is used to star a package.
+    /// Return `true` to indicate a success.
+    fn init(&mut self, logger: &Logger) -> bool;
     /// Check whether the url can be handled by this target.
+    ///
     /// This function should not touch the system or issue any network requests.
     fn can_handle(&self, url: &Url) -> bool;
     /// Star the package.

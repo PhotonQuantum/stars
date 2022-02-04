@@ -7,9 +7,15 @@ use url::Url;
 use crate::common::{BoxedError, Package, Source, SourceType, Target};
 use crate::Logger;
 
+enum TargetState {
+    Uninitialized,
+    Initialized,
+    Failed,
+}
+
 /// Registry for targets.
 pub struct TargetRegistry<'a> {
-    targets: HashMap<&'static str, Box<dyn Target>>,
+    targets: HashMap<&'static str, (Box<dyn Target>, TargetState)>,
     logger: &'a Logger,
 }
 
@@ -21,7 +27,10 @@ impl<'a> TargetRegistry<'a> {
         }
     }
     pub fn register(&mut self, target: impl Target) {
-        if let Some(collided) = self.targets.insert(target.name(), Box::new(target)) {
+        if let Some((collided, _)) = self.targets.insert(
+            target.name(),
+            (Box::new(target), TargetState::Uninitialized),
+        ) {
             panic!("target collision: {}", collided.name());
         }
     }
@@ -31,14 +40,41 @@ impl<'a> TargetRegistry<'a> {
     pub fn pack(&self, name: String, url: Url) -> Option<Package> {
         self.targets
             .iter()
-            .find(|(_, target)| target.can_handle(&url))
+            .find(|(_, (target, _))| target.can_handle(&url))
             .map(|(id, _)| Package::new(name, url, *id))
     }
-    pub fn star(&self, package: &Package) -> Result<(), BoxedError> {
-        self.targets.get(&package.target).map_or_else(
-            || Err(format!("no such target found: {}", package.target).into()),
-            |target| target.star(self.logger, &package.url),
-        )
+    pub fn star(&mut self, package: &Package) {
+        if let Some((target, state)) = self.targets.get_mut(&package.target) {
+            loop {
+                match state {
+                    TargetState::Uninitialized => {
+                        *state = if target.init(self.logger) {
+                            TargetState::Initialized
+                        } else {
+                            TargetState::Failed
+                        };
+                    }
+                    TargetState::Initialized => {
+                        if let Err(e) = target.star(self.logger, &package.url) {
+                            self.logger
+                                .error(format!("error while starring {}: {}", package, e));
+                        }
+                        break;
+                    }
+                    TargetState::Failed => {
+                        self.logger.warn(format!(
+                            "target {} not loaded, skipped {}",
+                            target.name(),
+                            package
+                        ));
+                        break;
+                    }
+                }
+            }
+        } else {
+            self.logger
+                .error(format!("no such target found: {}", package.target));
+        }
     }
 }
 
