@@ -1,4 +1,4 @@
-#![allow(clippy::module_name_repetitions)]
+#![allow(clippy::module_name_repetitions, clippy::default_trait_access)]
 extern crate core;
 
 use indicatif::{ProgressBar, ProgressStyle};
@@ -41,15 +41,26 @@ fn main() {
     logger.set_target(LogTarget::Plain);
 
     let pb = ProgressBar::new(packages.len() as u64);
+    let max_name_len = packages
+        .iter()
+        .map(|package| package.name.len())
+        .max()
+        .unwrap_or_default();
     pb.set_style(
         ProgressStyle::default_bar()
-            .template("{spinner:.green} [{wide_bar:.cyan/blue}] {pos}/{len} ({eta})")
+            .template(
+                format!(
+                "{{spinner:.green}} [{{wide_bar:.cyan/blue}}] {{pos}}/{{len}} ({{eta}}) {{msg:{}}}",
+                max_name_len
+            )
+                .as_str(),
+            )
             .progress_chars("#>-"),
     );
     pb.enable_steady_tick(100);
     logger.set_target(LogTarget::Progress(pb.clone()));
     for package in &packages {
-        logger.info(format!("Starring {}", package));
+        pb.set_message(package.to_string());
         targets.star(package);
         pb.inc(1);
     }

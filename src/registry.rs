@@ -4,7 +4,7 @@ use std::fs;
 use tap::TapFallible;
 use url::Url;
 
-use crate::common::{BoxedError, Package, Source, SourceType, Target};
+use crate::common::{Package, Source, SourceType, Target};
 use crate::Logger;
 
 enum TargetState {
