@@ -7,6 +7,7 @@ use crate::args::Args;
 use crate::github::Github;
 use crate::homebrew::Homebrew;
 use crate::logger::{LogTarget, Logger};
+use crate::pacman::Pacman;
 use crate::persist::Persist;
 use crate::registry::{SourceRegistry, TargetRegistry};
 
@@ -17,6 +18,7 @@ mod homebrew;
 mod logger;
 mod persist;
 mod registry;
+mod pacman;
 
 fn main() {
     let args: Args = argh::from_env();
@@ -26,6 +28,7 @@ fn main() {
 
     let mut sources = SourceRegistry::new(&logger);
     sources.register(Homebrew);
+    sources.register(Pacman);
     let mut targets = TargetRegistry::new(&logger, &mut persist);
     targets.register(Github::default());
     for disabled in args.disable {
