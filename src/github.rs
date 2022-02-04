@@ -5,12 +5,12 @@ use std::time::Duration;
 
 use url::Url;
 
-use crate::common::{BoxedError, Stargazer};
+use crate::common::{BoxedError, Target};
 use crate::Logger;
 
 pub struct Github;
 
-impl Stargazer for Github {
+impl Target for Github {
     fn name(&self) -> &'static str {
         "github"
     }

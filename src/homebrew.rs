@@ -5,7 +5,7 @@ use serde::Deserialize;
 use url::Url;
 
 use crate::common::{BoxedError, Package, Source, SourceType};
-use crate::registry::StargazerRegistry;
+use crate::registry::TargetRegistry;
 use crate::Logger;
 
 #[derive(Debug)]
@@ -28,7 +28,7 @@ impl Source for Homebrew {
         &self,
         logger: &Logger,
         _files: HashMap<&str, &[u8]>,
-        stargazers: &StargazerRegistry,
+        targets: &TargetRegistry,
     ) -> Result<Vec<Package>, BoxedError> {
         logger.debug("Fetching homebrew metadata...");
 
@@ -41,19 +41,19 @@ impl Source for Homebrew {
         let output: Output = serde_json::from_slice(&raw_output)?;
 
         let formulae_iter = output.formulae.into_iter().filter_map(|formula| {
-            stargazers
+            targets
                 .pack(formula.name.clone(), formula.homepage)
                 .or_else(|| {
                     formula
                         .urls
                         .into_iter()
-                        .find_map(|(_, rel)| stargazers.pack(formula.name.clone(), rel.url))
+                        .find_map(|(_, rel)| targets.pack(formula.name.clone(), rel.url))
                 })
         });
         let casks_iter = output.casks.into_iter().filter_map(|cask| {
-            stargazers
+            targets
                 .pack(cask.token.clone(), cask.homepage)
-                .or_else(|| stargazers.pack(cask.token, cask.url))
+                .or_else(|| targets.pack(cask.token, cask.url))
         });
 
         Ok(formulae_iter.chain(casks_iter).collect())

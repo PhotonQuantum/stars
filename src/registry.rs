@@ -4,43 +4,40 @@ use std::fs;
 use tap::TapFallible;
 use url::Url;
 
-use crate::common::{BoxedError, Package, Source, SourceType, Stargazer};
+use crate::common::{BoxedError, Package, Source, SourceType, Target};
 use crate::Logger;
 
-/// Registry for stargazers.
-pub struct StargazerRegistry<'a> {
-    stargazers: HashMap<&'static str, Box<dyn Stargazer>>,
+/// Registry for targets.
+pub struct TargetRegistry<'a> {
+    targets: HashMap<&'static str, Box<dyn Target>>,
     logger: &'a Logger,
 }
 
-impl<'a> StargazerRegistry<'a> {
+impl<'a> TargetRegistry<'a> {
     pub fn new(logger: &'a Logger) -> Self {
         Self {
-            stargazers: Default::default(),
+            targets: Default::default(),
             logger,
         }
     }
-    pub fn register(&mut self, stargazer: impl Stargazer) {
-        if let Some(collided) = self
-            .stargazers
-            .insert(stargazer.name(), Box::new(stargazer))
-        {
-            panic!("stargazer collision: {}", collided.name());
+    pub fn register(&mut self, target: impl Target) {
+        if let Some(collided) = self.targets.insert(target.name(), Box::new(target)) {
+            panic!("target collision: {}", collided.name());
         }
     }
     pub fn deregister(&mut self, name: &str) -> bool {
-        self.stargazers.remove(name).is_some()
+        self.targets.remove(name).is_some()
     }
     pub fn pack(&self, name: String, url: Url) -> Option<Package> {
-        self.stargazers
+        self.targets
             .iter()
-            .find(|(_, stargazer)| stargazer.can_handle(&url))
+            .find(|(_, target)| target.can_handle(&url))
             .map(|(id, _)| Package::new(name, url, *id))
     }
     pub fn star(&self, package: &Package) -> Result<(), BoxedError> {
-        self.stargazers.get(&package.stargazer).map_or_else(
-            || Err(format!("no such target found: {}", package.stargazer).into()),
-            |stargazer| stargazer.star(self.logger, &package.url),
+        self.targets.get(&package.target).map_or_else(
+            || Err(format!("no such target found: {}", package.target).into()),
+            |target| target.star(self.logger, &package.url),
         )
     }
 }
@@ -76,7 +73,7 @@ impl<'a> SourceRegistry<'a> {
             false
         }
     }
-    pub fn aggregate(&self, stargazers: &StargazerRegistry) -> Vec<Package> {
+    pub fn aggregate(&self, targets: &TargetRegistry) -> Vec<Package> {
         let cache: HashMap<&str, Vec<u8>> = self
             .sources
             .iter()
@@ -97,7 +94,7 @@ impl<'a> SourceRegistry<'a> {
             .iter()
             .flat_map(|source| match source.source_type() {
                 SourceType::Global if global_mode => source
-                    .snapshot(self.logger, HashMap::new(), stargazers)
+                    .snapshot(self.logger, HashMap::new(), targets)
                     .tap_err(|e| {
                         self.logger
                             .warn(format!("failed to snapshot {}: {}", source.name(), e));
@@ -115,7 +112,7 @@ impl<'a> SourceRegistry<'a> {
                     })
                     .map_or(vec![], |files| {
                         source
-                            .snapshot(self.logger, files, stargazers)
+                            .snapshot(self.logger, files, targets)
                             .tap_err(|e| {
                                 self.logger.warn(format!(
                                     "failed to snapshot {}: {}",

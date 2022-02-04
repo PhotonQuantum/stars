@@ -7,7 +7,7 @@ use crate::args::Args;
 use crate::github::Github;
 use crate::homebrew::Homebrew;
 use crate::logger::{LogTarget, Logger};
-use crate::registry::{SourceRegistry, StargazerRegistry};
+use crate::registry::{SourceRegistry, TargetRegistry};
 use crate::utils::Spinner;
 
 mod args;
@@ -28,10 +28,10 @@ fn main() {
         sources.deregister(disabled.as_str());
     }
 
-    let mut stargazers = StargazerRegistry::new(&logger);
-    stargazers.register(Github);
+    let mut targets = TargetRegistry::new(&logger);
+    targets.register(Github);
     for disabled in args.disable_target {
-        stargazers.deregister(disabled.as_str());
+        targets.deregister(disabled.as_str());
     }
 
     let pb = ProgressBar::new_spinner();
@@ -39,7 +39,7 @@ fn main() {
     logger.set_target(LogTarget::Progress(pb.clone()));
     let packages = {
         let _spinner = Spinner::new(pb);
-        sources.aggregate(&stargazers)
+        sources.aggregate(&targets)
     };
     logger.set_target(LogTarget::Plain);
 
@@ -52,7 +52,7 @@ fn main() {
     logger.set_target(LogTarget::Progress(pb.clone()));
     for package in &packages {
         logger.info(format!("Starring {}", package));
-        if let Err(e) = stargazers.star(package) {
+        if let Err(e) = targets.star(package) {
             logger.error(format!("error when starring {} - {}", package, e));
         }
         pb.inc(1);
