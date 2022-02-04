@@ -12,12 +12,13 @@ use crate::registry::TargetRegistry;
 use crate::{Logger, Persist};
 
 pub static HTTP: Lazy<Agent> = Lazy::new(|| {
-    AgentBuilder::new()
-        .user_agent(format!("me.lightquantum.stars/{}", env!("CARGO_PKG_VERSION")).as_str())
-        .tls_connector(Arc::new(
-            native_tls::TlsConnector::new().expect("unable to initialize tls"),
-        ))
-        .build()
+    let builder = AgentBuilder::new()
+        .user_agent(format!("me.lightquantum.stars/{}", env!("CARGO_PKG_VERSION")).as_str());
+    #[cfg(feature = "native_tls")]
+    let builder = builder.tls_connector(Arc::new(
+        native_tls::TlsConnector::new().expect("unable to initialize tls"),
+    ));
+    builder.build()
 });
 
 /// Convenient alias for boxed error.
