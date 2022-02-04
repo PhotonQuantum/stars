@@ -105,7 +105,7 @@ function extract() {
 ## Arch Linux/Manjaro etc
 if [[ $PACMAN -eq 1 ]]; then
   check "pacman cut"
-  list="$(pacman -Qq | xargs pacman -Qi | grep URL | grep 'https://github.com/' | sed 's/  */|/g' | cut -d '|' -f 3 | extract) $list"
+  list="$(pacman -Qi | grep URL | grep 'https://github.com/' | sed 's/  */|/g' | cut -d '|' -f 3 | extract) $list"
 fi
 
 ## Debian/Ubuntu etc
