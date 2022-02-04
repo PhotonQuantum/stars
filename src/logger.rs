@@ -17,14 +17,14 @@ impl Default for LogTarget {
 
 pub struct Logger {
     target: RefCell<LogTarget>,
-    quiet: bool
+    quiet: bool,
 }
 
 impl Logger {
     pub fn new(quiet: bool) -> Self {
         Self {
             target: RefCell::new(Default::default()),
-            quiet
+            quiet,
         }
     }
     pub fn set_target(&self, target: LogTarget) {
