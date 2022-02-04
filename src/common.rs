@@ -63,8 +63,7 @@ pub trait Target: 'static {
     /// This function should not touch the system or issue any network requests.
     fn can_handle(&self, url: &Url) -> bool;
     /// Star the package.
-    fn star(&self, logger: &Logger, persist: &mut Persist, package: &Url)
-        -> Result<(), BoxedError>;
+    fn star(&self, logger: &Logger, persist: &mut Persist, url: &Url) -> Result<(), BoxedError>;
 }
 
 /// A package with star handler packed in.

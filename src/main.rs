@@ -26,13 +26,10 @@ fn main() {
 
     let mut sources = SourceRegistry::new(&logger);
     sources.register(Homebrew);
-    for disabled in args.disable_source {
-        sources.deregister(disabled.as_str());
-    }
-
     let mut targets = TargetRegistry::new(&logger, &mut persist);
     targets.register(Github::default());
-    for disabled in args.disable_target {
+    for disabled in args.disable {
+        sources.deregister(disabled.as_str());
         targets.deregister(disabled.as_str());
     }
 

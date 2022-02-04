@@ -10,10 +10,7 @@ pub struct Args {
     /// suppress all output
     #[argh(switch, short = 'q')]
     pub quiet: bool,
-    /// disable specific sources
+    /// disable specific modules
     #[argh(option)]
-    pub disable_source: Vec<String>,
-    /// disable specific targets
-    #[argh(option)]
-    pub disable_target: Vec<String>,
+    pub disable: Vec<String>,
 }
