@@ -50,6 +50,8 @@ jobs:
           toolchain: stable
           default: true
       - uses: Swatinem/rust-cache@v1
+        with:
+          key: ${{ matrix.tls }}
       - uses: actions-rs/cargo@v1
         name: Running Tests 🚀
         with:
