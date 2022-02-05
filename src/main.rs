@@ -26,11 +26,15 @@ fn main() {
 
     let mut persist = Persist::new();
 
+    // !! When you implement a new source, you need to add it to the SourceRegistry.
     let mut sources = SourceRegistry::new(&logger);
     sources.register(Homebrew);
     sources.register(Pacman);
+
+    // !! When you implement a new target, you need to add it to the TargetRegistry.
     let mut targets = TargetRegistry::new(&logger, &mut persist);
     targets.register(Github::default());
+
     for disabled in args.disable {
         sources.deregister(disabled.as_str());
         targets.deregister(disabled.as_str());

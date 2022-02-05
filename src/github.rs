@@ -19,13 +19,18 @@ impl Target for Github {
 
     fn init(&mut self, logger: &Logger, persist: &mut Persist) -> bool {
         #[allow(clippy::option_if_let_else)] // borrow ck fails
+        // Check for saved credentials.
         let credential = if let Some(token) =
             persist.get_state(|state| state.get("github_credential").cloned())
         {
             token.as_str().unwrap().to_string()
         } else {
+            // No saved credentials. Ask for one.
+
+            // Pause progressbar ticking for user input.
             logger.pause_tick();
 
+            // Ask for credentials.
             let username: String = dialoguer::Input::new()
                 .with_prompt("Please input your github username")
                 .interact()
@@ -36,10 +41,12 @@ impl Target for Github {
                 .expect("write to term");
             let cred = format!("{}:{}", username, token);
 
+            // Save credentials.
             persist.with_state(|state| {
                 state.insert(String::from("github_credential"), cred.clone().into());
             });
 
+            // Resume progressbar ticking.
             logger.resume_tick();
             cred
         };
