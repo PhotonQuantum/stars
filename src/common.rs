@@ -2,24 +2,22 @@
 
 use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter};
-#[cfg(feature = "native_tls")]
-use std::sync::Arc;
 
+use attohttpc::header::USER_AGENT;
+use attohttpc::Session;
 use once_cell::sync::Lazy;
-use ureq::{Agent, AgentBuilder};
 use url::Url;
 
 use crate::registry::TargetRegistry;
 use crate::{Logger, Persist};
 
-pub static HTTP: Lazy<Agent> = Lazy::new(|| {
-    let builder = AgentBuilder::new()
-        .user_agent(format!("me.lightquantum.stars/{}", env!("CARGO_PKG_VERSION")).as_str());
-    #[cfg(feature = "native_tls")]
-    let builder = builder.tls_connector(Arc::new(
-        native_tls::TlsConnector::new().expect("unable to initialize tls"),
-    ));
-    builder.build()
+pub static HTTP: Lazy<Session> = Lazy::new(|| {
+    let mut session = Session::new();
+    session.header(
+        USER_AGENT,
+        format!("me.lightquantum.stars/{}", env!("CARGO_PKG_VERSION")),
+    );
+    session
 });
 
 /// Convenient alias for boxed error.

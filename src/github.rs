@@ -1,5 +1,6 @@
 //! Github integration.
 
+use attohttpc::header::AUTHORIZATION;
 use itertools::Itertools;
 use url::Url;
 
@@ -63,19 +64,18 @@ impl Target for Github {
 
         let resp = HTTP
             .put(format!("https://api.github.com/user/starred/{}/{}", user, repo).as_str())
-            .set(
-                "Authorization",
+            .header(
+                AUTHORIZATION,
                 format!("Basic {}", base64::encode(self.credential.clone().unwrap())).as_str(),
             )
-            .call()?;
+            .send()?;
 
-        if resp.status() < 200 || resp.status() >= 300 {
-            #[allow(clippy::to_string_in_format_args)] // borrow ck fails
+        if !resp.status().is_success() {
             logger.warn(format!(
                 "Non-2xx response for {}: {} {}",
                 url,
-                resp.status_text().to_string(),
-                resp.into_string().unwrap_or_default()
+                resp.status(),
+                resp.text().unwrap_or_default()
             ));
         }
 

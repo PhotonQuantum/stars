@@ -16,9 +16,9 @@ mod common;
 mod github;
 mod homebrew;
 mod logger;
+mod pacman;
 mod persist;
 mod registry;
-mod pacman;
 
 fn main() {
     let args: Args = argh::from_env();
