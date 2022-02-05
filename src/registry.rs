@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fs;
-use itertools::Itertools;
 
+use itertools::Itertools;
 use tap::TapFallible;
 use url::Url;
 
@@ -180,7 +180,7 @@ impl<'a> SourceRegistry<'a> {
                     }),
                 _ => vec![],
             })
-            .unique_by(|package|package.identifier.clone())
+            .unique_by(|package| package.identifier.clone())
             .collect()
     }
 }

@@ -6,7 +6,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use crate::args::Args;
 use crate::github::Github;
 use crate::homebrew::Homebrew;
-use crate::logger::{LogTarget, Logger};
+use crate::logger::Logger;
 use crate::pacman::Pacman;
 use crate::persist::Persist;
 use crate::registry::{SourceRegistry, TargetRegistry};
@@ -48,9 +48,9 @@ fn main() {
     pb.set_style(ProgressStyle::default_spinner().template("{spinner:.green} {msg}"));
     pb.set_message("Aggregating packages...");
     pb.enable_steady_tick(100);
-    logger.set_target(LogTarget::Progress(pb));
+    logger.progress_bar(pb);
     let packages = sources.aggregate(&targets);
-    logger.set_target(LogTarget::Plain);
+    logger.plain();
 
     let pb = if args.quiet {
         ProgressBar::hidden()
@@ -74,12 +74,11 @@ fn main() {
             .progress_chars("#>-"),
     );
     pb.enable_steady_tick(100);
-    logger.set_target(LogTarget::Progress(pb.clone()));
+    logger.progress_bar(pb.clone());
     for package in &packages {
         pb.set_message(package.to_string());
         targets.star(package);
         pb.inc(1);
     }
-    drop(pb);
-    logger.set_target(LogTarget::Plain);
+    logger.plain();
 }

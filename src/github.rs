@@ -1,6 +1,7 @@
 //! Github integration.
 
 use attohttpc::header::AUTHORIZATION;
+use console::style;
 use itertools::Itertools;
 use url::Url;
 
@@ -28,15 +29,28 @@ impl Target for Github {
             // No saved credentials. Ask for one.
 
             // Pause progressbar ticking for user input.
-            logger.pause_tick();
+            logger.pause_progressbar();
 
             // Ask for credentials.
+            logger.info("Please enter your GitHub credentials.");
+            logger
+                .info("Acquire a personal access token at https://github.com/settings/tokens/new.");
+            logger.info("`public_repo` scope is required.");
+            logger.warn("Beware that star actions will be publicly visible.");
+            logger.warn("To avoid polluting your timeline, consider using a dedicated account.");
+
             let username: String = dialoguer::Input::new()
-                .with_prompt("Please input your github username")
+                .with_prompt(format!(
+                    "{} Please input your GitHub username",
+                    style("?").cyan()
+                ))
                 .interact()
                 .expect("write to term");
             let token: String = dialoguer::Password::new()
-                .with_prompt("Please input your github token")
+                .with_prompt(format!(
+                    "{} Please input your GitHub token",
+                    style("?").cyan()
+                ))
                 .interact()
                 .expect("write to term");
             let cred = format!("{}:{}", username, token);
@@ -47,7 +61,7 @@ impl Target for Github {
             });
 
             // Resume progressbar ticking.
-            logger.resume_tick();
+            logger.resume_progressbar();
             cred
         };
 
