@@ -59,7 +59,7 @@ jobs:
         name: Dry Run 🚀
         with:
           command: run
-          args: --no-default-features --features ${{ matrix.tls }} --workspace
+          args: --no-default-features --features ${{ matrix.tls }}
 
   test_cross:
     name: Test (Cross)
