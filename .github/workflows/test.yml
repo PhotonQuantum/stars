@@ -38,9 +38,8 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest, macos-latest, windows-latest ]
+        tls: [ rustls, native_tls ]
     runs-on: ${{ matrix.os }}
-    env:
-      TEST_FAST: 1
     steps:
       - uses: actions/checkout@v2
         name: Checkout 🛎️
@@ -55,4 +54,52 @@ jobs:
         name: Running Tests 🚀
         with:
           command: test
-          args: --workspace
+          args: --no-default-features --features ${{ matrix.tls }} --workspace
+      - uses: actions-rs/cargo@v1
+        name: Dry Run 🚀
+        with:
+          command: run
+          args: --no-default-features --features ${{ matrix.tls }} --workspace
+
+  test_cross:
+    name: Test (Cross)
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-musl
+            features: rustls
+          - target: riscv64gc-unknown-linux-gnu
+            features: native_tls,openssl_vendored
+          - target: armv7-unknown-linux-gnueabihf
+            features: native_tls,openssl_vendored
+          - target: armv7-unknown-linux-musleabihf
+            features: rustls
+          - target: aarch64-unknown-linux-gnu
+            features: native_tls,openssl_vendored
+          - target: aarch64-unknown-linux-musl
+            features: rustls
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        name: Checkout 🛎️
+      - uses: actions-rs/toolchain@v1
+        name: Setup Cargo Toolchain 🛎️
+        with:
+          profile: minimal
+          toolchain: stable
+          default: true
+      - uses: Swatinem/rust-cache@v1
+        with:
+          key: ${{ matrix.target }}
+      - uses: actions-rs/cargo@v1
+        name: Running Tests 🚀
+        with:
+          use-cross: true
+          command: test
+          args: --target ${{ matrix.target }} --no-default-features --features ${{ matrix.features }} --workspace
+      - uses: actions-rs/cargo@v1
+        name: Dry Run 🚀
+        with:
+          use-cross: true
+          command: run
+          args: --target ${{ matrix.target }} --no-default-features --features ${{ matrix.features }} -- --dry-run

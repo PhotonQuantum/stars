@@ -77,7 +77,11 @@ fn main() {
     logger.progress_bar(pb.clone());
     for package in &packages {
         pb.set_message(package.to_string());
-        targets.star(package);
+        if args.dry_run {
+            logger.debug(format!("Dry-run: star {}, ignored", package));
+        } else {
+            targets.star(package);
+        }
         pb.inc(1);
     }
     logger.plain();
