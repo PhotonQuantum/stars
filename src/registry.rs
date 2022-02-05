@@ -18,12 +18,12 @@ enum TargetState {
 pub struct TargetRegistry<'a> {
     targets: HashMap<&'static str, (Box<dyn Target>, TargetState)>,
     logger: &'a Logger,
-    persist: &'a mut Persist,
+    persist: &'a mut Persist<'a>,
 }
 
 impl<'a> TargetRegistry<'a> {
     /// Create a new registry.
-    pub fn new(logger: &'a Logger, persist: &'a mut Persist) -> Self {
+    pub fn new(logger: &'a Logger, persist: &'a mut Persist<'a>) -> Self {
         Self {
             targets: Default::default(),
             logger,

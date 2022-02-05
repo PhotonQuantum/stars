@@ -24,7 +24,7 @@ fn main() {
     let args: Args = argh::from_env();
     let logger = Logger::new(args.quiet);
 
-    let mut persist = Persist::new();
+    let mut persist = Persist::new(&logger);
 
     // !! When you implement a new source, you need to add it to the SourceRegistry.
     let mut sources = SourceRegistry::new(&logger);
