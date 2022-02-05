@@ -42,18 +42,18 @@ impl Source for Homebrew {
 
         let formulae_iter = output.formulae.into_iter().filter_map(|formula| {
             targets
-                .pack(formula.name.clone(), formula.homepage)
+                .pack(formula.name.clone(), &formula.homepage)
                 .or_else(|| {
                     formula
                         .urls
                         .into_iter()
-                        .find_map(|(_, rel)| targets.pack(formula.name.clone(), rel.url))
+                        .find_map(|(_, rel)| targets.pack(formula.name.clone(), &rel.url))
                 })
         });
         let casks_iter = output.casks.into_iter().filter_map(|cask| {
             targets
-                .pack(cask.token.clone(), cask.homepage)
-                .or_else(|| targets.pack(cask.token, cask.url))
+                .pack(cask.token.clone(), &cask.homepage)
+                .or_else(|| targets.pack(cask.token, &cask.url))
         });
 
         Ok(formulae_iter.chain(casks_iter).collect())

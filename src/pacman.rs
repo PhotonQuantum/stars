@@ -38,7 +38,7 @@ impl Source for Pacman {
 
         Ok(re
             .captures_iter(output)
-            .filter_map(|cap| targets.pack(cap[1].to_string(), Url::from_str(&cap[2]).ok()?))
+            .filter_map(|cap| targets.pack(cap[1].to_string(), &Url::from_str(&cap[2]).ok()?))
             .collect())
     }
 }

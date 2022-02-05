@@ -4,7 +4,7 @@ use attohttpc::header::AUTHORIZATION;
 use itertools::Itertools;
 use url::Url;
 
-use crate::common::{BoxedError, Target, HTTP};
+use crate::common::{BoxedError, Package, Target, HTTP};
 use crate::{Logger, Persist};
 
 #[derive(Default)]
@@ -48,22 +48,20 @@ impl Target for Github {
         true
     }
 
-    fn can_handle(&self, url: &Url) -> bool {
-        url.domain().map_or(false, |domain| {
-            domain == "github.com" || domain == "www.github.com"
-        })
+    fn try_handle(&self, url: &Url) -> Option<String> {
+        let domain = url.domain()?;
+        let segments = url.path_segments()?;
+        if domain != "github.com" {
+            return None;
+        }
+
+        let (user, repo) = segments.take(2).filter(|s| !s.is_empty()).collect_tuple()?;
+        Some(format!("{}/{}", user, repo))
     }
 
-    fn star(&self, logger: &Logger, _persist: &mut Persist, url: &Url) -> Result<(), BoxedError> {
-        let (user, repo): (&str, &str) = url
-            .path_segments()
-            .ok_or("not valid github repo")?
-            .take(2)
-            .collect_tuple()
-            .ok_or("not valid github repo")?;
-
+    fn star(&self, logger: &Logger, package: &Package) -> Result<(), BoxedError> {
         let resp = HTTP
-            .put(format!("https://api.github.com/user/starred/{}/{}", user, repo).as_str())
+            .put(format!("https://api.github.com/user/starred/{}", package.identifier).as_str())
             .header(
                 AUTHORIZATION,
                 format!("Basic {}", base64::encode(self.credential.clone().unwrap())).as_str(),
@@ -73,7 +71,7 @@ impl Target for Github {
         if !resp.status().is_success() {
             logger.warn(format!(
                 "Non-2xx response for {}: {} {}",
-                url,
+                package,
                 resp.status(),
                 resp.text().unwrap_or_default()
             ));

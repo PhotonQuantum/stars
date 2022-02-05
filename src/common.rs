@@ -56,14 +56,17 @@ pub trait Target: 'static {
     /// Initialize the target.
     ///
     /// This function will be called first time this target is used to star a package.
+    /// `persist` struct can be used to save states across multiple runs.
+    ///
     /// Return `true` to indicate a success.
     fn init(&mut self, logger: &Logger, persist: &mut Persist) -> bool;
     /// Check whether the url can be handled by this target.
+    /// If can, extract identifier specific to this target from the url.
     ///
     /// This function should not touch the system or issue any network requests.
-    fn can_handle(&self, url: &Url) -> bool;
+    fn try_handle(&self, url: &Url) -> Option<String>;
     /// Star the package.
-    fn star(&self, logger: &Logger, persist: &mut Persist, url: &Url) -> Result<(), BoxedError>;
+    fn star(&self, logger: &Logger, package: &Package) -> Result<(), BoxedError>;
 }
 
 /// A package with star handler packed in.
@@ -72,15 +75,19 @@ pub trait Target: 'static {
 pub struct Package {
     /// Name of the package.
     pub name: String,
-    /// Url of the package.
-    pub url: Url,
+    /// Identifier of the url.
+    pub identifier: String,
     /// Target to star the package.
     pub target: &'static str,
 }
 
 impl Package {
-    pub const fn new(name: String, url: Url, target: &'static str) -> Self {
-        Self { name, url, target }
+    pub const fn new(name: String, identifier: String, target: &'static str) -> Self {
+        Self {
+            name,
+            identifier,
+            target,
+        }
     }
 }
 

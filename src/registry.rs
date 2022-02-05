@@ -39,11 +39,11 @@ impl<'a> TargetRegistry<'a> {
     pub fn deregister(&mut self, name: &str) -> bool {
         self.targets.remove(name).is_some()
     }
-    pub fn pack(&self, name: String, url: Url) -> Option<Package> {
+    pub fn pack(&self, name: String, url: &Url) -> Option<Package> {
         self.targets
             .iter()
-            .find(|(_, (target, _))| target.can_handle(&url))
-            .map(|(id, _)| Package::new(name, url, *id))
+            .find_map(|(target_id, (target, _))| Some((target_id, target.try_handle(url)?)))
+            .map(|(target_id, package_id)| Package::new(name, package_id, target_id))
     }
     pub fn star(&mut self, package: &Package) {
         if let Some((target, state)) = self.targets.get_mut(&package.target) {
@@ -57,7 +57,7 @@ impl<'a> TargetRegistry<'a> {
                         };
                     }
                     TargetState::Initialized => {
-                        if let Err(e) = target.star(self.logger, self.persist, &package.url) {
+                        if let Err(e) = target.star(self.logger, package) {
                             self.logger
                                 .error(format!("error while starring {}: {}", package, e));
                         }
