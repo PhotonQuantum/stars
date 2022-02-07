@@ -5,7 +5,6 @@ use std::process::Command;
 use std::str;
 use std::str::FromStr;
 
-use rayon::iter::{ParallelBridge, ParallelIterator};
 use regex::Regex;
 use url::Url;
 
@@ -41,7 +40,6 @@ impl Source for Portage {
 
         Ok(packages
             .lines()
-            .par_bridge()
             .filter_map(|package| {
                 let (_, name) = package.split_once("/")?;
                 let raw_output = Command::new("equery")

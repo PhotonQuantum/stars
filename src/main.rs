@@ -30,11 +30,6 @@ mod yum;
 mod tests;
 
 fn main() {
-    rayon::ThreadPoolBuilder::new()
-        .num_threads(512)
-        .build_global()
-        .unwrap();
-
     let args: Args = argh::from_env();
     let logger = Logger::new(args.quiet);
 

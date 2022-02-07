@@ -1,5 +1,5 @@
+use std::cell::RefCell;
 use std::fmt::Display;
-use std::sync::RwLock;
 
 use console::{style, Term};
 use indicatif::ProgressBar;
@@ -17,7 +17,7 @@ impl Default for LogTarget {
 
 /// Global logger.
 pub struct Logger {
-    target: RwLock<LogTarget>,
+    target: RefCell<LogTarget>,
     quiet: bool,
 }
 
@@ -26,7 +26,7 @@ impl Logger {
     /// Creates a new logger. If `quiet` is `true`, the logger will not print anything.
     pub fn new(quiet: bool) -> Self {
         Self {
-            target: RwLock::new(Default::default()),
+            target: RefCell::new(Default::default()),
             quiet,
         }
     }
@@ -35,11 +35,11 @@ impl Logger {
     /// Messages will print above the progressbar, avoiding them from being overwritten.
     /// Beware that text may output to stderr together with the bar.
     pub fn progress_bar(&self, pb: ProgressBar) {
-        *self.target.write().unwrap() = LogTarget::Progress(pb, false);
+        *self.target.borrow_mut() = LogTarget::Progress(pb, false);
     }
     /// Sets the logger's target to plain stdout.
     pub fn plain(&self) {
-        *self.target.write().unwrap() = LogTarget::Plain;
+        *self.target.borrow_mut() = LogTarget::Plain;
     }
     /// Logs a debug message.
     pub fn debug(&self, msg: impl Display) {
@@ -60,7 +60,7 @@ impl Logger {
     /// Logs a message.
     pub fn println(&self, msg: impl Display) {
         if !self.quiet {
-            match &*self.target.read().unwrap() {
+            match &*self.target.borrow() {
                 LogTarget::Progress(pb, paused) if !paused => pb.println(msg.to_string()),
                 _ => println!("{}", msg),
             }
@@ -69,7 +69,7 @@ impl Logger {
     /// Pause background tick of progress bar.
     /// This is useful when you want to pause the progressbar redrawing and resume it later.
     pub fn pause_progressbar(&self) {
-        if let LogTarget::Progress(pb, paused) = &mut *self.target.write().unwrap() {
+        if let LogTarget::Progress(pb, paused) = &mut *self.target.borrow_mut() {
             pb.disable_steady_tick();
             Term::stderr().clear_last_lines(1).unwrap();
             *paused = true;
@@ -78,7 +78,7 @@ impl Logger {
     /// Resume background tick of progress bar.
     /// This is useful when you want to resume the progressbar redrawing.
     pub fn resume_progressbar(&self) {
-        if let LogTarget::Progress(pb, paused) = &mut *self.target.write().unwrap() {
+        if let LogTarget::Progress(pb, paused) = &mut *self.target.borrow_mut() {
             println!();
             pb.enable_steady_tick(100);
             *paused = false;

@@ -53,7 +53,7 @@ pub enum SourceType {
 }
 
 /// Target platform to star a package.
-pub trait Target: 'static + Send + Sync {
+pub trait Target: 'static {
     /// Identifier of this target.
     fn name(&self) -> &'static str;
     /// Initialize the target.
