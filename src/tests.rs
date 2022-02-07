@@ -1,5 +1,5 @@
-use std::cell::RefCell;
 use std::collections::HashMap;
+use std::sync::Mutex;
 
 use url::Url;
 
@@ -7,7 +7,7 @@ use crate::common::{BoxedError, Package, Source, Target};
 use crate::{Logger, Persist, TargetRegistry};
 
 #[derive(Default)]
-struct DebugTarget(RefCell<Vec<Package>>);
+struct DebugTarget(Mutex<Vec<Package>>);
 
 impl Target for DebugTarget {
     fn name(&self) -> &'static str {
@@ -23,7 +23,7 @@ impl Target for DebugTarget {
     }
 
     fn star(&self, _logger: &Logger, package: &Package) -> Result<(), BoxedError> {
-        self.0.borrow_mut().push(package.clone());
+        self.0.lock().unwrap().push(package.clone());
         Ok(())
     }
 }
