@@ -4,6 +4,7 @@ extern crate core;
 use indicatif::{ProgressBar, ProgressStyle};
 
 use crate::args::Args;
+use crate::dpkg::Dpkg;
 use crate::github::Github;
 use crate::homebrew::Homebrew;
 use crate::logger::Logger;
@@ -13,6 +14,7 @@ use crate::registry::{SourceRegistry, TargetRegistry};
 
 mod args;
 mod common;
+mod dpkg;
 mod github;
 mod homebrew;
 mod logger;
@@ -32,6 +34,7 @@ fn main() {
     let mut sources = SourceRegistry::new(&logger);
     sources.register(Homebrew);
     sources.register(Pacman);
+    sources.register(Dpkg);
 
     // !! When you implement a new target, you need to add it to the TargetRegistry.
     let mut targets = TargetRegistry::new(&logger, &mut persist);
