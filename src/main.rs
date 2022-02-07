@@ -19,6 +19,8 @@ mod logger;
 mod pacman;
 mod persist;
 mod registry;
+#[cfg(test)]
+mod tests;
 
 fn main() {
     let args: Args = argh::from_env();

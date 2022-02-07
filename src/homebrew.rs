@@ -95,3 +95,14 @@ struct Cask {
     homepage: Url,
     url: Url,
 }
+
+#[cfg(test)]
+mod tests{
+    use super::Homebrew;
+    use crate::tests::test_source;
+
+    #[test]
+    fn test_pacman() {
+        test_source(&Homebrew);
+    }
+}
