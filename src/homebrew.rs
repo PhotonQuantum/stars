@@ -97,9 +97,10 @@ struct Cask {
 }
 
 #[cfg(test)]
-mod tests{
-    use super::Homebrew;
+mod tests {
     use crate::tests::test_source;
+
+    use super::Homebrew;
 
     #[test]
     fn test_pacman() {

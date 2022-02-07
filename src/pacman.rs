@@ -46,9 +46,10 @@ impl Source for Pacman {
 }
 
 #[cfg(test)]
-mod tests{
-    use super::Pacman;
+mod tests {
     use crate::tests::test_source;
+
+    use super::Pacman;
 
     #[test]
     fn test_pacman() {

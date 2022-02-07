@@ -1,9 +1,10 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
+
 use url::Url;
 
-use crate::{Logger, Persist, TargetRegistry};
 use crate::common::{BoxedError, Package, Source, Target};
+use crate::{Logger, Persist, TargetRegistry};
 
 #[derive(Default)]
 struct DebugTarget(RefCell<Vec<Package>>);
