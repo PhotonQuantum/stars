@@ -2,9 +2,11 @@ on:
   push:
     branches:
       - master
+      - ci-container
   pull_request:
     branches:
       - master
+      - ci-container
 
 name: Test
 
@@ -105,3 +107,39 @@ jobs:
           use-cross: true
           command: run
           args: --target ${{ matrix.target }} --no-default-features --features ${{ matrix.features }} -- --dry-run
+
+  test_container:
+    name: Test (Container)
+    strategy:
+      matrix:
+        include:
+          - image: "archlinux:base-devel"
+            command: "echo"
+          - image: "fedora:latest"
+            command: "dnf install -y gcc"
+    runs-on: ubuntu-latest
+    container: ${{ matrix.image }}
+    steps:
+      - uses: actions/checkout@v2
+        name: Checkout 🛎️
+      - run: ${{ matrix.command }}
+        name: Prepare System 🛎️
+      - uses: actions-rs/toolchain@v1
+        name: Setup Cargo Toolchain 🛎️
+        with:
+          profile: minimal
+          toolchain: stable
+          default: true
+      - uses: Swatinem/rust-cache@v1
+        with:
+          key: ${{ matrix.image }}
+      - uses: actions-rs/cargo@v1
+        name: Running Tests 🚀
+        with:
+          command: test
+          args: --no-default-features --features rustls --workspace
+      - uses: actions-rs/cargo@v1
+        name: Dry Run 🚀
+        with:
+          command: run
+          args: --no-default-features --features rustls -- --dry-run
