@@ -10,6 +10,7 @@ use crate::homebrew::Homebrew;
 use crate::logger::Logger;
 use crate::pacman::Pacman;
 use crate::persist::Persist;
+use crate::portage::Portage;
 use crate::registry::{SourceRegistry, TargetRegistry};
 use crate::yum::Yum;
 
@@ -21,6 +22,7 @@ mod homebrew;
 mod logger;
 mod pacman;
 mod persist;
+mod portage;
 mod registry;
 mod yum;
 
@@ -39,6 +41,7 @@ fn main() {
     sources.register(Pacman);
     sources.register(Dpkg);
     sources.register(Yum);
+    sources.register(Portage);
 
     // !! When you implement a new target, you need to add it to the TargetRegistry.
     let mut targets = TargetRegistry::new(&logger, &mut persist);
