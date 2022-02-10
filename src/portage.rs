@@ -32,7 +32,7 @@ impl Source for Portage {
     }
 
     fn available(&self) -> bool {
-        which::which("portageq").is_ok()
+        which::which("equery").is_ok()
     }
 
     fn snapshot(
