@@ -2,6 +2,7 @@ on:
   push:
     branches:
       - master
+      - portage
   pull_request:
     branches:
       - master
@@ -141,3 +142,14 @@ jobs:
         with:
           command: run
           args: --no-default-features --features rustls -- --dry-run
+
+  test_gentoo:
+    name: Test (Gentoo)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: docker-compose -f gentoo-test.yml pull
+      - uses: satackey/action-docker-layer-caching@v0.0.11
+        continue-on-error: true
+      - run: docker-compose -f gentoo-test.yml build
+      - run: docker-compose -f gentoo-test.yml run test
