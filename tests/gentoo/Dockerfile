@@ -7,9 +7,6 @@ FROM gentoo/stage3:latest as base
 # copy the entire portage volume in
 COPY --from=portage /var/db/repos/gentoo /var/db/repos/gentoo
 
-# install gentoolkit
-RUN emerge app-portage/gentoolkit
-
 # install rust
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 

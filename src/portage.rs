@@ -1,17 +1,17 @@
 //! Portage integration.
 
 use std::collections::HashMap;
-use std::fs;
+use std::ffi::OsString;
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::str;
 use std::str::FromStr;
+use std::{fs, io};
 
-use itertools::Itertools;
 use once_cell::sync::Lazy;
 use regex::Regex;
-use tap::TapOptional;
+use tap::TapFallible;
 use url::Url;
 
 use crate::common::{BoxedError, Package, Source, SourceType};
@@ -32,7 +32,7 @@ impl Source for Portage {
     }
 
     fn available(&self) -> bool {
-        which::which("equery").is_ok()
+        which::which("portageq").is_ok()
     }
 
     fn snapshot(
@@ -41,70 +41,85 @@ impl Source for Portage {
         _files: HashMap<&str, &[u8]>,
         targets: &TargetRegistry,
     ) -> Result<Vec<Package>, BoxedError> {
-        let raw_output = Command::new("equery")
-            .arg("list")
-            .arg("*")
-            .arg("-F")
-            .arg("$repo;$category;$name;$fullversion")
-            .output()?
-            .stdout;
-        let packages = str::from_utf8(&*raw_output)?;
+        let vdb = vdb_path()?;
 
-        let mut repo_path_cache = HashMap::new();
-
-        Ok(packages
-            .lines()
-            .filter_map(|package| {
-                let (repo, category, name, full_version) = package.split(';').collect_tuple()?;
-                let repo_path = repo_path_cache
-                    .entry(repo.to_string())
-                    .or_insert_with(|| {
-                        repo_path(repo).tap_none(|| {
-                            logger.warn(format!("repo {} not found", repo));
-                        })
-                    })
-                    .as_ref()?;
-                let homepages = portage_homepage(repo_path, category, name, full_version)
-                    .unwrap_or_else(|e| {
-                        logger.warn(format!("package {}/{}: {}", category, name, e));
-                        None
-                    })?;
+        Ok(iter_atoms(vdb, logger)?
+            .into_iter()
+            .filter_map(|atom| {
+                let name =
+                    extract_name_from_fullname(&*atom.fullname.to_string_lossy()).to_string();
+                let homepages = homepages(atom.ebuild_path).unwrap_or_else(|e| {
+                    logger.warn(format!("atom {:?}: {}", name, e));
+                    None
+                })?;
                 homepages
                     .into_iter()
-                    .find_map(|homepage| targets.try_parse(name.to_string(), &homepage))
+                    .find_map(|homepage| targets.try_parse(name.clone(), &homepage))
             })
             .collect())
     }
 }
 
-fn repo_path(repo: &str) -> Option<PathBuf> {
-    PathBuf::from_str(
-        str::from_utf8(
-            &*Command::new("portageq")
-                .arg("get_repo_path")
-                .arg("/")
-                .arg(repo)
-                .output()
-                .ok()?
-                .stdout,
-        )
-        .ok()?
-        .trim(),
-    )
-    .ok()
+/// Get vdb path from portage (normally /var/db/pkg).
+fn vdb_path() -> Result<PathBuf, BoxedError> {
+    let raw_output = Command::new("portageq").arg("vdb_path").output()?;
+    let vdb_path = str::from_utf8(&*raw_output.stdout)?;
+    Ok(PathBuf::from(vdb_path.trim()))
 }
 
-fn portage_homepage(
-    repo_path: impl AsRef<Path>,
-    category: &str,
-    name: &str,
-    full_version: &str,
-) -> Result<Option<Vec<Url>>, BoxedError> {
-    let ebuild_path = repo_path
-        .as_ref()
-        .join(category)
-        .join(name)
-        .join(format!("{}-{}.ebuild", name, full_version));
+/// Extract atom name (PN) from fullname (PF).
+fn extract_name_from_fullname(pf: &str) -> &str {
+    // Regex adopted from
+    // https://github.com/gentoo/portage-utils/blob/297e49f62a6520fce353b8e82f3bba430f1ea613/libq/atom.c#L277
+    static RE: Lazy<Regex> = Lazy::new(|| Regex::new(r#"-\d[.\d]*[a-z]?[^_-]*"#).unwrap());
+
+    RE.find_iter(pf)
+        .last() // Get the last component matching version syntax ...
+        .map_or(pf, |m| &pf[..m.start()]) // ... and truncate str to it. If there's no version component, take the whole str.
+}
+
+struct Atom {
+    fullname: OsString,
+    ebuild_path: OsString,
+}
+
+/// Iterate over all atoms in vdb.
+fn iter_atoms(vdb: impl AsRef<Path>, logger: &Logger) -> Result<Vec<Atom>, BoxedError> {
+    Ok(fs::read_dir(vdb)? // iterate through category dir
+        .filter_map(Result::ok)
+        .map(|e| e.path())
+        .flat_map(|category| {
+            // iterate through atom dir
+            fs::read_dir(&category)
+                .tap_err(|e| {
+                    logger.warn(format!(
+                        "unable to iterate through category {:?}: {}",
+                        category, e
+                    ));
+                })
+                .into_iter()
+                .flatten()
+                .filter_map(Result::ok)
+                .map(|e| {
+                    let fullname = e.file_name();
+                    // Guess ebuild filename from path.
+                    let ebuild_path = {
+                        let mut s = e.path().join(&fullname).into_os_string();
+                        s.push(".ebuild");
+                        s
+                    };
+
+                    Atom {
+                        fullname,
+                        ebuild_path,
+                    }
+                })
+        })
+        .collect())
+}
+
+/// Extract homepages from ebuild.
+fn homepages(ebuild_path: impl AsRef<Path>) -> Result<Option<Vec<Url>>, io::Error> {
     match fs::read_to_string(ebuild_path) {
         Ok(ebuild) => Ok(RE
             .captures(ebuild.as_str())
@@ -116,7 +131,7 @@ fn portage_homepage(
             })
             .unwrap_or_default()),
         Err(e) if e.kind() == ErrorKind::NotFound => Ok(None),
-        Err(e) => Err(Box::new(e)),
+        Err(e) => Err(e),
     }
 }
 
