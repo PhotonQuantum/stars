@@ -35,7 +35,7 @@ pub fn test_source(source: &impl Source) {
     }
 
     let logger = Logger::new(false);
-    let mut persist = Persist::new(&logger);
+    let mut persist = Persist::new(&logger, false);
 
     let mut targets = TargetRegistry::new(&logger, &mut persist);
     targets.register(DebugTarget::default());
