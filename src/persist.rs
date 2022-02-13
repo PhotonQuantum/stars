@@ -17,7 +17,7 @@ pub struct Persist<'a> {
 
 impl<'a> Persist<'a> {
     /// Loads the persist values from default path.
-    pub fn new(logger: &'a Logger) -> Self {
+    pub fn new(logger: &'a Logger, ignore_exist: bool) -> Self {
         let config_dir = directories::ProjectDirs::from("me", "lightquantum", "stars")
             .unwrap()
             .config_dir()
@@ -25,7 +25,11 @@ impl<'a> Persist<'a> {
         if let Err(e) = fs::create_dir_all(&config_dir) {
             logger.warn(format!("Failed to create config directory: {}", e));
         }
-        Self::from_path(config_dir.join("persist.json"), logger)
+        if ignore_exist {
+            Self::empty(config_dir.join("persist.json"), logger)
+        } else {
+            Self::from_path(config_dir.join("persist.json"), logger)
+        }
     }
     /// Loads the persist values from the given path.
     pub fn from_path(path: impl AsRef<Path>, logger: &'a Logger) -> Self {
@@ -35,6 +39,14 @@ impl<'a> Persist<'a> {
         Self {
             kvs,
             path: path.to_path_buf(),
+            logger,
+        }
+    }
+    /// Ignore the persist values and create a new store.
+    pub fn empty(path: impl AsRef<Path>, logger: &'a Logger) -> Self {
+        Self {
+            kvs: Map::new(),
+            path: path.as_ref().to_path_buf(),
             logger,
         }
     }

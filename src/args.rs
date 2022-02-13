@@ -10,6 +10,9 @@ pub struct Args {
     /// suppress all output
     #[argh(switch, short = 'q')]
     pub quiet: bool,
+    /// ignore persisted states (like credentials)
+    #[argh(switch)]
+    pub ignore_saved: bool,
     /// disable specific modules
     #[argh(option)]
     pub disable: Vec<String>,

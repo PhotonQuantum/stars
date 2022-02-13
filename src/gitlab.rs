@@ -1,6 +1,7 @@
-//! Github integration.
+//! Gitlab integration.
 
 use attohttpc::header::AUTHORIZATION;
+use attohttpc::StatusCode;
 use console::style;
 use itertools::Itertools;
 use url::Url;
@@ -9,90 +10,89 @@ use crate::common::{BoxedError, Package, Target, HTTP};
 use crate::{Logger, Persist};
 
 #[derive(Default)]
-pub struct Github {
-    credential: Option<String>,
+pub struct Gitlab {
+    access_token: Option<String>,
 }
 
-impl Target for Github {
+impl Target for Gitlab {
     fn name(&self) -> &'static str {
-        "github"
+        "gitlab"
     }
 
     fn init(&mut self, logger: &Logger, persist: &mut Persist) -> bool {
         #[allow(clippy::option_if_let_else)] // borrow ck fails
-        // Check for saved credentials.
-        let credential = if let Some(token) =
-            persist.get_state(|state| state.get("github_credential").cloned())
+        // Check for saved token.
+        let token = if let Some(token) =
+            persist.get_state(|state| state.get("gitlab_token").cloned())
         {
             token.as_str().unwrap().to_string()
         } else {
-            // No saved credentials. Ask for one.
+            // No saved token. Ask for one.
 
             // Pause progressbar ticking for user input.
             logger.pause_progressbar();
 
-            // Ask for credentials.
-            logger.info("Please enter your GitHub credentials.");
+            // Ask for token.
+            logger.info("Please enter your GitLab token.");
             logger
-                .info("Acquire a personal access token at https://github.com/settings/tokens/new.");
-            logger.info("`public_repo` scope is required.");
+                .info("Acquire a personal access token at https://gitlab.com/-/profile/personal_access_tokens.");
+            logger.info("`api` and `read_api` scopes are required.");
             logger.warn("Beware that star actions will be publicly visible.");
             logger.warn("To avoid polluting your timeline, consider using a dedicated account.");
 
-            let username: String = dialoguer::Input::new()
-                .with_prompt(format!(
-                    "{} Please input your GitHub username",
-                    style("?").cyan()
-                ))
-                .interact()
-                .expect("write to term");
             let token: String = dialoguer::Password::new()
                 .with_prompt(format!(
-                    "{} Please input your GitHub token",
+                    "{} Please input your GitLab token",
                     style("?").cyan()
                 ))
                 .interact()
                 .expect("write to term");
-            let cred = format!("{}:{}", username, token);
 
-            // Save credentials.
+            // Save token.
             persist.with_state(|state| {
-                state.insert(String::from("github_credential"), cred.clone().into());
+                state.insert(String::from("gitlab_token"), token.clone().into());
             });
 
             // Resume progressbar ticking.
             logger.resume_progressbar();
-            cred
+            token
         };
 
-        self.credential = Some(credential);
+        self.access_token = Some(token);
         true
     }
 
     fn try_handle(&self, url: &Url) -> Option<String> {
         let domain = url.domain()?;
         let segments = url.path_segments()?;
-        if domain != "github.com" && domain != "www.github.com" {
+        if domain != "gitlab.com" && domain != "www.gitlab.com" {
             return None;
         }
 
         let (user, repo) = segments.take(2).filter(|s| !s.is_empty()).collect_tuple()?;
         let repo = repo.trim_end_matches(".git");
-        Some(format!("{}/{}", user, repo))
+        let encoded = urlencoding::encode(&format!("{}/{}", user, repo)).to_string();
+        Some(encoded)
     }
 
     fn star(&self, logger: &Logger, package: &Package) -> Result<(), BoxedError> {
         let resp = HTTP
-            .put(format!("https://api.github.com/user/starred/{}", package.identifier).as_str())
+            .post(
+                format!(
+                    "https://gitlab.com/api/v4/projects/{}/star",
+                    package.identifier
+                )
+                .as_str(),
+            )
             .header(
                 AUTHORIZATION,
-                format!("Basic {}", base64::encode(self.credential.clone().unwrap())).as_str(),
+                format!("Bearer {}", self.access_token.clone().unwrap()).as_str(),
             )
             .send()?;
 
-        if !resp.status().is_success() {
+        if !resp.status().is_success() && resp.status() != StatusCode::NOT_MODIFIED {
             logger.warn(format!(
-                "Non-2xx response for {}: {} {}",
+                "Non-2xx/304 response for {}: {} {}",
                 package,
                 resp.status(),
                 resp.text().unwrap_or_default()
