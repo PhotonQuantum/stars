@@ -25,7 +25,7 @@ pub static HTTP: Lazy<Session> = Lazy::new(|| {
 pub type BoxedError = Box<dyn std::error::Error + Send + Sync>;
 
 /// Source of packages.
-pub trait Source: 'static + Debug {
+pub trait Source: 'static {
     /// Identifier of this source.
     fn name(&self) -> &'static str;
     /// Type of this source.
