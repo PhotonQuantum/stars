@@ -30,7 +30,7 @@ impl Target for Gitlab {
             // No saved token. Ask for one.
 
             // Pause progressbar ticking for user input.
-            logger.pause_progressbar();
+            logger.pause_progress_bar();
 
             // Ask for token.
             logger.info("Please enter your GitLab token.");
@@ -54,7 +54,7 @@ impl Target for Gitlab {
             });
 
             // Resume progressbar ticking.
-            logger.resume_progressbar();
+            logger.resume_progress_bar();
             token
         };
 

@@ -2,11 +2,15 @@ use std::cell::RefCell;
 use std::fmt::Display;
 
 use console::{style, Term};
-use indicatif::ProgressBar;
+use indicatif::{ProgressBar, ProgressStyle};
 
 enum LogTarget {
     Plain,
-    Progress(ProgressBar, /* paused */ bool),
+    Progress(
+        ProgressBar,
+        /* paused */ bool,
+        /* max_message_len */ usize,
+    ),
 }
 
 impl Default for LogTarget {
@@ -30,15 +34,8 @@ impl Logger {
             quiet,
         }
     }
-    /// Sets the logger's target to a progressbar.
-    ///
-    /// Messages will print above the progressbar, avoiding them from being overwritten.
-    /// Beware that text may output to stderr together with the bar.
-    pub fn progress_bar(&self, pb: ProgressBar) {
-        *self.target.borrow_mut() = LogTarget::Progress(pb, false);
-    }
     /// Sets the logger's target to plain stdout.
-    pub fn plain(&self) {
+    pub fn set_plain(&self) {
         *self.target.borrow_mut() = LogTarget::Plain;
     }
     /// Logs a debug message.
@@ -61,15 +58,15 @@ impl Logger {
     pub fn println(&self, msg: impl Display) {
         if !self.quiet {
             match &*self.target.borrow() {
-                LogTarget::Progress(pb, paused) if !paused => pb.println(msg.to_string()),
+                LogTarget::Progress(pb, paused, _) if !paused => pb.println(msg.to_string()),
                 _ => println!("{}", msg),
             }
         }
     }
     /// Pause background tick of progress bar.
     /// This is useful when you want to pause the progressbar redrawing and resume it later.
-    pub fn pause_progressbar(&self) {
-        if let LogTarget::Progress(pb, paused) = &mut *self.target.borrow_mut() {
+    pub fn pause_progress_bar(&self) {
+        if let LogTarget::Progress(pb, paused, _) = &mut *self.target.borrow_mut() {
             pb.disable_steady_tick();
             Term::stderr().clear_last_lines(1).unwrap();
             *paused = true;
@@ -77,11 +74,73 @@ impl Logger {
     }
     /// Resume background tick of progress bar.
     /// This is useful when you want to resume the progressbar redrawing.
-    pub fn resume_progressbar(&self) {
-        if let LogTarget::Progress(pb, paused) = &mut *self.target.borrow_mut() {
+    pub fn resume_progress_bar(&self) {
+        if let LogTarget::Progress(pb, paused, _) = &mut *self.target.borrow_mut() {
             println!();
             pb.enable_steady_tick(100);
             *paused = false;
         }
     }
+
+    /// Set progress bar style to determinate.
+    /// A new progress bar will be created if one does not exist.
+    pub fn set_progress_bar_determinate(&self, max: u64) {
+        self.with_progress_bar(|pb| {
+            pb.set_length(max);
+            pb.set_style(pb_style(0));
+            pb.enable_steady_tick(100);
+        });
+    }
+
+    /// Set progress bar style to spinner.
+    /// A new progress bar will be created if one does not exist.
+    pub fn set_progress_bar_spinner(&self) {
+        self.with_progress_bar(|pb| {
+            pb.set_style(
+                indicatif::ProgressStyle::default_bar().template("{spinner:.green} {msg}"),
+            );
+            pb.enable_steady_tick(100);
+        });
+    }
+
+    /// Mutate progress bar.
+    /// A new progress bar will be created if one does not exist.
+    pub fn with_progress_bar(&self, f: impl FnOnce(&ProgressBar)) {
+        if !self.quiet {
+            let pb = self.acquire_progress_bar();
+            f(&pb);
+        }
+    }
+
+    pub fn set_message(&self, msg: impl Display) {
+        if let LogTarget::Progress(pb, _, max_len) = &mut *self.target.borrow_mut() {
+            let msg = msg.to_string();
+            if pb.length() > 0 && msg.len() > *max_len {
+                *max_len = msg.len();
+                pb.set_style(pb_style(*max_len));
+            }
+            pb.set_message(msg);
+        }
+    }
+
+    fn acquire_progress_bar(&self) -> ProgressBar {
+        if let LogTarget::Progress(pb, _, _) = &*self.target.borrow() {
+            return pb.clone();
+        }
+        let pb = ProgressBar::new(0);
+        *self.target.borrow_mut() = LogTarget::Progress(pb.clone(), false, 0);
+        pb
+    }
+}
+
+fn pb_style(max_len: usize) -> ProgressStyle {
+    ProgressStyle::default_bar()
+        .template(
+            format!(
+                "{{spinner:.green}} [{{wide_bar:.cyan/blue}}] {{pos}}/{{len}} ({{eta}}) {{msg:{}}}",
+                max_len
+            )
+            .as_str(),
+        )
+        .progress_chars("#>-")
 }
