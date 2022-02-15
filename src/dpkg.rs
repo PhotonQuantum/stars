@@ -57,7 +57,7 @@ mod tests {
     use super::Dpkg;
 
     #[test]
-    fn test_pacman() {
+    fn test_dpkg() {
         test_source(&Dpkg);
     }
 }

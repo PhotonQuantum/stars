@@ -56,7 +56,7 @@ mod tests {
     use super::Yum;
 
     #[test]
-    fn test_pacman() {
+    fn test_yum() {
         test_source(&Yum);
     }
 }

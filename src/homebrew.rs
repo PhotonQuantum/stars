@@ -103,7 +103,7 @@ mod tests {
     use super::Homebrew;
 
     #[test]
-    fn test_pacman() {
+    fn test_homebrew() {
         test_source(&Homebrew);
     }
 }
