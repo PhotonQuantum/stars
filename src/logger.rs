@@ -97,7 +97,7 @@ impl Logger {
     pub fn set_progress_bar_spinner(&self) {
         self.with_progress_bar(|pb| {
             pb.set_style(
-                indicatif::ProgressStyle::default_bar().template("{spinner:.green} {msg}"),
+                indicatif::ProgressStyle::default_bar().template("{spinner:.green} {prefix} {msg}"),
             );
             pb.enable_steady_tick(100);
         });
@@ -110,6 +110,10 @@ impl Logger {
             let pb = self.acquire_progress_bar();
             f(&pb);
         }
+    }
+
+    pub fn set_prefix(&self, msg: impl Display) {
+        self.with_progress_bar(|pb| pb.set_prefix(msg.to_string()));
     }
 
     pub fn set_message(&self, msg: impl Display) {
@@ -137,7 +141,7 @@ fn pb_style(max_len: usize) -> ProgressStyle {
     ProgressStyle::default_bar()
         .template(
             format!(
-                "{{spinner:.green}} [{{wide_bar:.cyan/blue}}] {{pos}}/{{len}} ({{eta}}) {{msg:{}}}",
+                "{{spinner:.green}} {{prefix}} [{{wide_bar:.cyan/blue}}] {{pos}}/{{len}} ({{eta}}) {{msg:{}}}",
                 max_len
             )
             .as_str(),

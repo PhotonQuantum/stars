@@ -151,7 +151,6 @@ impl<'a> SourceRegistry<'a> {
             .flat_map(|source| match source.source_type() {
                 SourceType::Global if global_mode => {
                     self.logger.set_progress_bar_spinner();
-                    self.logger.set_message("Aggregating packages...");
                     source
                         .snapshot(self.logger, HashMap::new(), targets)
                         .tap_err(|e| {
@@ -175,7 +174,6 @@ impl<'a> SourceRegistry<'a> {
                     })
                     .map_or(vec![], |files| {
                         self.logger.set_progress_bar_spinner();
-                        self.logger.set_message("Aggregating packages...");
                         source
                             .snapshot(self.logger, files, targets)
                             .tap_err(|e| {

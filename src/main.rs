@@ -60,8 +60,10 @@ fn main() {
         targets.deregister(disabled.as_str());
     }
 
+    logger.set_prefix("Aggregating packages...");
     let packages = sources.aggregate(&targets);
 
+    logger.set_prefix("Starring packages...");
     logger.set_progress_bar_determinate(packages.len() as u64);
     for package in &packages {
         logger.set_message(package);
@@ -73,4 +75,6 @@ fn main() {
         logger.with_progress_bar(|pb| pb.inc(1));
     }
     logger.set_plain();
+
+    logger.info(format!("Done! {} packages starred.", packages.len()));
 }
