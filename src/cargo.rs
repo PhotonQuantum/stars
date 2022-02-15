@@ -115,3 +115,15 @@ enum CrateValue {
     Ver(String),
     Map { name: Option<String> },
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::tests::test_source;
+
+    use super::Cargo;
+
+    #[test]
+    fn test_cargo() {
+        test_source(&Cargo);
+    }
+}
