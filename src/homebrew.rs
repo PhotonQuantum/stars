@@ -98,12 +98,16 @@ struct Cask {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use crate::tests::test_source;
 
     use super::Homebrew;
 
     #[test]
     fn test_homebrew() {
-        test_source(&Homebrew);
+        test_source(&Homebrew, HashMap::new(), |packages| {
+            assert!(!packages.is_empty())
+        });
     }
 }

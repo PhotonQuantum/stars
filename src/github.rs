@@ -29,7 +29,7 @@ impl Target for Github {
             // No saved credentials. Ask for one.
 
             // Pause progressbar ticking for user input.
-            logger.pause_progressbar();
+            logger.pause_progress_bar();
 
             // Ask for credentials.
             logger.info("Please enter your GitHub credentials.");
@@ -61,7 +61,7 @@ impl Target for Github {
             });
 
             // Resume progressbar ticking.
-            logger.resume_progressbar();
+            logger.resume_progress_bar();
             cred
         };
 

@@ -137,12 +137,16 @@ fn homepages(ebuild_path: impl AsRef<Path>) -> Result<Option<Vec<Url>>, io::Erro
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use crate::tests::test_source;
 
     use super::Portage;
 
     #[test]
     fn test_portage() {
-        test_source(&Portage);
+        test_source(&Portage, HashMap::new(), |packages| {
+            assert!(!packages.is_empty())
+        });
     }
 }

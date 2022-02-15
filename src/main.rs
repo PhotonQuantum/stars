@@ -1,9 +1,12 @@
-#![allow(clippy::module_name_repetitions, clippy::default_trait_access)]
+#![allow(
+    clippy::module_name_repetitions,
+    clippy::default_trait_access,
+    clippy::similar_names
+)]
 extern crate core;
 
-use indicatif::{ProgressBar, ProgressStyle};
-
 use crate::args::Args;
+use crate::cargo::Cargo;
 use crate::dpkg::Dpkg;
 use crate::github::Github;
 use crate::gitlab::Gitlab;
@@ -28,6 +31,7 @@ mod portage;
 mod registry;
 mod yum;
 
+mod cargo;
 #[cfg(test)]
 mod tests;
 
@@ -44,6 +48,7 @@ fn main() {
     sources.register(Dpkg);
     sources.register(Yum);
     sources.register(Portage);
+    sources.register(Cargo);
 
     // !! When you implement a new target, you need to add it to the TargetRegistry.
     let mut targets = TargetRegistry::new(&logger, &mut persist);
@@ -55,49 +60,21 @@ fn main() {
         targets.deregister(disabled.as_str());
     }
 
-    let pb = if args.quiet {
-        ProgressBar::hidden()
-    } else {
-        ProgressBar::new_spinner()
-    };
-    pb.set_style(ProgressStyle::default_spinner().template("{spinner:.green} {msg}"));
-    pb.set_message("Aggregating packages...");
-    pb.enable_steady_tick(100);
-    logger.progress_bar(pb);
+    logger.set_prefix("Aggregating packages...");
     let packages = sources.aggregate(&targets);
-    logger.plain();
 
-    let pb = if args.quiet {
-        ProgressBar::hidden()
-    } else {
-        ProgressBar::new(packages.len() as u64)
-    };
-    let max_name_len = packages
-        .iter()
-        .map(|package| package.name.len())
-        .max()
-        .unwrap_or_default();
-    pb.set_style(
-        ProgressStyle::default_bar()
-            .template(
-                format!(
-                    "{{spinner:.green}} [{{wide_bar:.cyan/blue}}] {{pos}}/{{len}} ({{eta}}) {{msg:{}}}",
-                    max_name_len
-                )
-                    .as_str(),
-            )
-            .progress_chars("#>-"),
-    );
-    pb.enable_steady_tick(100);
-    logger.progress_bar(pb.clone());
+    logger.set_prefix("Starring packages...");
+    logger.set_progress_bar_determinate(packages.len() as u64);
     for package in &packages {
-        pb.set_message(package.to_string());
+        logger.set_message(package);
         if args.dry_run {
             logger.debug(format!("Dry-run: star {}, ignored", package));
         } else {
             targets.star(package);
         }
-        pb.inc(1);
+        logger.with_progress_bar(|pb| pb.inc(1));
     }
-    logger.plain();
+    logger.set_plain();
+
+    logger.info(format!("Done! {} packages starred.", packages.len()));
 }

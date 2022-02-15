@@ -149,13 +149,19 @@ impl<'a> SourceRegistry<'a> {
         self.sources
             .iter()
             .flat_map(|source| match source.source_type() {
-                SourceType::Global if global_mode => source
-                    .snapshot(self.logger, HashMap::new(), targets)
-                    .tap_err(|e| {
-                        self.logger
-                            .warn(format!("failed to snapshot {}: {}", source.name(), e));
-                    })
-                    .unwrap_or_default(),
+                SourceType::Global if global_mode => {
+                    self.logger.set_progress_bar_spinner();
+                    source
+                        .snapshot(self.logger, HashMap::new(), targets)
+                        .tap_err(|e| {
+                            self.logger.warn(format!(
+                                "failed to snapshot {}: {}",
+                                source.name(),
+                                e
+                            ));
+                        })
+                        .unwrap_or_default()
+                }
                 SourceType::Local(filenames) if !global_mode => filenames
                     .iter()
                     .fold(Some(HashMap::new()), |acc, x| {
@@ -167,6 +173,7 @@ impl<'a> SourceRegistry<'a> {
                         })
                     })
                     .map_or(vec![], |files| {
+                        self.logger.set_progress_bar_spinner();
                         source
                             .snapshot(self.logger, files, targets)
                             .tap_err(|e| {
