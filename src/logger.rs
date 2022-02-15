@@ -144,7 +144,7 @@ fn pb_style(max_len: usize) -> ProgressStyle {
                 "{{spinner:.green}} {{prefix}} [{{wide_bar:.cyan/blue}}] {{pos}}/{{len}} ({{eta}}) {{msg:{}}}",
                 max_len
             )
-            .as_str(),
+                .as_str(),
         )
         .progress_chars("#>-")
 }

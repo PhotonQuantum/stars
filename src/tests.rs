@@ -28,7 +28,11 @@ impl Target for DebugTarget {
     }
 }
 
-pub fn test_source(source: &impl Source) {
+pub fn test_source(
+    source: &impl Source,
+    files: HashMap<&str, &[u8]>,
+    assert: impl FnOnce(&[Package]),
+) {
     if !source.available() {
         eprintln!("{} not present, skipped", source.name());
         return;
@@ -40,7 +44,7 @@ pub fn test_source(source: &impl Source) {
     let mut targets = TargetRegistry::new(&logger, &mut persist);
     targets.register(DebugTarget::default());
 
-    let packages = source.snapshot(&logger, HashMap::new(), &targets).unwrap();
+    let packages = source.snapshot(&logger, files, &targets).unwrap();
 
-    assert!(!packages.is_empty());
+    assert(&*packages);
 }

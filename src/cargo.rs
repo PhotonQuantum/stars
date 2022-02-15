@@ -118,12 +118,20 @@ enum CrateValue {
 
 #[cfg(test)]
 mod tests {
+    use maplit::hashmap;
+
     use crate::tests::test_source;
 
     use super::Cargo;
 
     #[test]
     fn test_cargo() {
-        test_source(&Cargo);
+        test_source(
+            &Cargo,
+            hashmap! {
+                "Cargo.toml" => &include_bytes!("../Cargo.toml")[..],
+            },
+            |packages| assert!(!packages.is_empty()),
+        );
     }
 }

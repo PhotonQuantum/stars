@@ -52,12 +52,16 @@ impl Source for Dpkg {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use crate::tests::test_source;
 
     use super::Dpkg;
 
     #[test]
     fn test_dpkg() {
-        test_source(&Dpkg);
+        test_source(&Dpkg, HashMap::new(), |packages| {
+            assert!(!packages.is_empty())
+        });
     }
 }

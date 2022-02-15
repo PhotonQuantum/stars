@@ -51,12 +51,16 @@ impl Source for Yum {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use crate::tests::test_source;
 
     use super::Yum;
 
     #[test]
     fn test_yum() {
-        test_source(&Yum);
+        test_source(&Yum, HashMap::new(), |packages| {
+            assert!(!packages.is_empty())
+        });
     }
 }

@@ -31,3 +31,6 @@ toml = "0.5"
 url = { version = "2.2", features = ["serde"] }
 urlencoding = "2.1"
 which = "4.2"
+
+[dev-dependencies]
+maplit = "1.0"

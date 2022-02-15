@@ -47,12 +47,16 @@ impl Source for Pacman {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use crate::tests::test_source;
 
     use super::Pacman;
 
     #[test]
     fn test_pacman() {
-        test_source(&Pacman);
+        test_source(&Pacman, HashMap::new(), |packages| {
+            assert!(!packages.is_empty())
+        });
     }
 }
