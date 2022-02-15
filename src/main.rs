@@ -1,7 +1,12 @@
-#![allow(clippy::module_name_repetitions, clippy::default_trait_access)]
+#![allow(
+    clippy::module_name_repetitions,
+    clippy::default_trait_access,
+    clippy::similar_names
+)]
 extern crate core;
 
 use crate::args::Args;
+use crate::cargo::Cargo;
 use crate::dpkg::Dpkg;
 use crate::github::Github;
 use crate::gitlab::Gitlab;
@@ -26,6 +31,7 @@ mod portage;
 mod registry;
 mod yum;
 
+mod cargo;
 #[cfg(test)]
 mod tests;
 
@@ -42,6 +48,7 @@ fn main() {
     sources.register(Dpkg);
     sources.register(Yum);
     sources.register(Portage);
+    sources.register(Cargo);
 
     // !! When you implement a new target, you need to add it to the TargetRegistry.
     let mut targets = TargetRegistry::new(&logger, &mut persist);
