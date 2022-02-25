@@ -17,7 +17,7 @@ argh = "0.1"
 attohttpc = { version = "0.18", default_features = false, features = ["compress", "json"] }
 base64 = "0.13.0"
 console = "0.15"
-dialoguer = "0.9"
+dialoguer = "0.10"
 directories = "4.0"
 indicatif = "0.16"
 itertools = "0.10"
