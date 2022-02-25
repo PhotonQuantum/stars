@@ -131,6 +131,8 @@ jobs:
       - uses: Swatinem/rust-cache@v1
         with:
           key: ${{ matrix.image }}
+      - run: cargo install --locked cargo-local-install
+        name: Install Some Random Crate 🛎️
       - uses: actions-rs/cargo@v1
         name: Running Tests 🚀
         with:
