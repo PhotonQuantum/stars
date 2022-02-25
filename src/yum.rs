@@ -60,7 +60,7 @@ mod tests {
     #[test]
     fn test_yum() {
         test_source(&Yum, HashMap::new(), |packages| {
-            assert!(!packages.is_empty())
+            assert!(!packages.is_empty());
         });
     }
 }

@@ -61,7 +61,7 @@ mod tests {
     #[test]
     fn test_dpkg() {
         test_source(&Dpkg, HashMap::new(), |packages| {
-            assert!(!packages.is_empty())
+            assert!(!packages.is_empty());
         });
     }
 }

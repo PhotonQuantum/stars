@@ -107,7 +107,7 @@ mod tests {
     #[test]
     fn test_homebrew() {
         test_source(&Homebrew, HashMap::new(), |packages| {
-            assert!(!packages.is_empty())
+            assert!(!packages.is_empty());
         });
     }
 }

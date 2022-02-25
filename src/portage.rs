@@ -146,7 +146,7 @@ mod tests {
     #[test]
     fn test_portage() {
         test_source(&Portage, HashMap::new(), |packages| {
-            assert!(!packages.is_empty())
+            assert!(!packages.is_empty());
         });
     }
 }

@@ -1,27 +1,24 @@
 # This is a configuration file for the bacon tool
 # More info at https://github.com/Canop/bacon
 
-default_job = "check"
+default_job = "clippy"
+
+[keybindings]
+k = "scroll-lines(-1)"
+j = "scroll-lines(1)"
+c = "job:clippy"
+t = "job:test"
+f = "job:fix"
+shift-F9 = "toggle-backtrace"
+ctrl-r = "toggle-raw-output"
+ctrl-u = "scroll-page(-1)"
+ctrl-d = "scroll-page(1)"
 
 [jobs]
 
-[jobs.check]
-command = ["cargo", "check", "--color", "always"]
-need_stdout = false
-
-[jobs.check-all]
-command = ["cargo", "check", "--all-targets", "--color", "always"]
-need_stdout = false
-watch = ["tests", "benches", "examples"]
-
 [jobs.clippy]
-command = ["cargo", "clippy", "--all", "--tests", "--color", "always", "--", "-W", "clippy::all", "-W", "clippy::nursery", "-W", "clippy::pedantic"]
+command = ["cargo", "clippy", "--workspace", "--tests", "--color", "always", "--", "-W", "clippy::all", "-W", "clippy::nursery", "-W", "clippy::pedantic"]
 need_stdout = false
-
-[jobs.clippy-all]
-command = ["cargo", "clippy", "--all-targets", "--color", "always"]
-need_stdout = false
-watch = ["tests", "benches", "examples"]
 
 [jobs.test]
 command = ["cargo", "test", "--color", "always"]
@@ -31,3 +28,8 @@ watch = ["tests"]
 [jobs.doc]
 command = ["cargo", "doc", "--color", "always", "--no-deps"]
 need_stdout = false
+
+[jobs.fix]
+command = ["cargo", "clippy", "--fix", "--allow-dirty", "--workspace", "--tests", "--color", "always", "--", "-W", "clippy::all", "-W", "clippy::nursery", "-W", "clippy::pedantic"]
+need_stdout = false
+on_success = "job:clippy"

@@ -56,7 +56,7 @@ mod tests {
     #[test]
     fn test_pacman() {
         test_source(&Pacman, HashMap::new(), |packages| {
-            assert!(!packages.is_empty())
+            assert!(!packages.is_empty());
         });
     }
 }

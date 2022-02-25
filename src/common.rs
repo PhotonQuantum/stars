@@ -47,7 +47,6 @@ pub enum SourceType {
     /// Global type. Suitable for system package managers (e.g., apt, pacman).
     Global,
     /// Local type. Suitable for project lockfile (e.g., Cargo.lock). Specify filenames to read.
-    /// TODO not implemented yet
     #[allow(dead_code)]
     Local(&'static [&'static str]),
 }
