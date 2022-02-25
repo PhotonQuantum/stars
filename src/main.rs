@@ -6,7 +6,7 @@
 extern crate core;
 
 use crate::args::Args;
-use crate::cargo::Cargo;
+use crate::cargo::{Cargo, CargoGlobal};
 use crate::dpkg::Dpkg;
 use crate::github::Github;
 use crate::gitlab::Gitlab;
@@ -49,6 +49,7 @@ fn main() {
     sources.register(Yum);
     sources.register(Portage);
     sources.register(Cargo);
+    sources.register(CargoGlobal);
 
     // !! When you implement a new target, you need to add it to the TargetRegistry.
     let mut targets = TargetRegistry::new(&logger, &mut persist);
