@@ -71,7 +71,7 @@ mod tests {
     use super::Zypper;
 
     #[test]
-    fn test_pacman() {
+    fn test_zypper() {
         test_source(&Zypper, HashMap::new(), |packages| {
             assert!(!packages.is_empty());
         });
