@@ -190,7 +190,7 @@ mod tests {
     #[test]
     fn test_cargo_global() {
         test_source(&CargoGlobal, HashMap::new(), |packages| {
-            assert!(!packages.is_empty())
+            assert!(!packages.is_empty());
         });
     }
 }
