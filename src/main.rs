@@ -17,8 +17,10 @@ use crate::persist::Persist;
 use crate::portage::Portage;
 use crate::registry::{SourceRegistry, TargetRegistry};
 use crate::yum::Yum;
+use crate::zypper::Zypper;
 
 mod args;
+mod cargo;
 mod common;
 mod dpkg;
 mod github;
@@ -30,8 +32,8 @@ mod persist;
 mod portage;
 mod registry;
 mod yum;
+mod zypper;
 
-mod cargo;
 #[cfg(test)]
 mod tests;
 
@@ -50,6 +52,7 @@ fn main() {
     sources.register(Portage);
     sources.register(Cargo);
     sources.register(CargoGlobal);
+    sources.register(Zypper);
 
     // !! When you implement a new target, you need to add it to the TargetRegistry.
     let mut targets = TargetRegistry::new(&logger, &mut persist);
