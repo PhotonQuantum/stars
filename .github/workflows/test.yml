@@ -150,8 +150,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: docker-compose -f gentoo-test.yml pull
+
+      - run: echo "MONTH=$(date +%m)" >> $GITHUB_ENV
       - uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true
+        with:
+          key: gentoo-${{ github.workflow }}-${{ env.MONTH }}-{hash}
+          restore-keys: |
+            gentoo-${{ github.workflow }}-${{ env.MONTH }}-
+
       - run: docker-compose -f gentoo-test.yml build
       - run: docker-compose -f gentoo-test.yml run test
 
