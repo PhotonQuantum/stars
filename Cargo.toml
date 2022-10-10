@@ -14,7 +14,7 @@ openssl_vendored = ["openssl/vendored"]
 
 [dependencies]
 argh = "0.1"
-attohttpc = { version = "0.20", default_features = false, features = ["compress", "json"] }
+attohttpc = { version = "0.23", default_features = false, features = ["compress", "json"] }
 base64 = "0.13.0"
 console = "0.15"
 dialoguer = "0.10"
